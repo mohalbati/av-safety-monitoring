@@ -4,6 +4,7 @@ title: "Can Field Data Catch a Safety Regression? Test coverage, sequential moni
 version: "1.0"
 date-released: "2026-11-01"
 license: MIT
+doi: "10.5281/zenodo.23858361"
 repository-code: "https://github.com/mohalbati/av-safety-monitoring"
 authors:
   - family-names: Albati

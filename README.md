@@ -1,5 +1,7 @@
 # Can field data catch a safety regression?
 
+[![DOI](https://zenodo.org/badge/1441811364.svg)](https://doi.org/10.5281/zenodo.23858361)
+
 Test coverage, sequential monitoring and automated risk reporting for automated-driving software releases.
 
 After each software release, an ADS safety team needs to know two things: whether pre-release testing was enough, and how fast field data would reveal a release that made driving less safe. This repository answers both quantitatively. It uses event rates per mile derived from public NHTSA crash reports for Waymo's rider-only fleet (271.3 million miles through June 2026; [companion analysis](https://github.com/mohalbati/av-safety-bayesian-analysis), DOI [10.5281/zenodo.23732384](https://doi.org/10.5281/zenodo.23732384)).
@@ -66,6 +68,10 @@ python scripts/build_docs.py     # optional: rebuild the report and note (needs 
 
 - [av-safety-bayesian-analysis](https://github.com/mohalbati/av-safety-bayesian-analysis): Bayesian rare-event analysis of robotaxi crash data (source of the rates).
 - [av-counterfactual-uq](https://github.com/mohalbati/av-counterfactual-uq): uncertainty quantification of counterfactual crash simulation, with browser and CARLA simulators.
+
+## Cite
+
+Albati, M. (2026). *Can Field Data Catch a Safety Regression? Test coverage, sequential monitoring and automated risk reporting for automated-driving software releases* (v1.0). Zenodo. https://doi.org/10.5281/zenodo.23858361
 
 ## Author
 
