@@ -1,0 +1,18 @@
+{
+ "canary10_allcrash_weeks": 55.3,
+ "canary10_lead_weeks": 4.0,
+ "oc_pass_prob_at_0p1pct_zero_fail": 0.7414484806367362,
+ "oc_pass_prob_at_0p3pct_zero_fail": 0.4072417876546918,
+ "arl_max_abs_rel_diff_pct": 2.2,
+ "fw_5charts_260": 0.8646647167633873,
+ "fw_20charts_520": 0.9816843611112658,
+ "bayes_weeks_to_95": {
+  "All reported crashes": 2,
+  "Any-injury crashes": 14,
+  "Airbag deployment": 5,
+  "Serious injury or worse": 21,
+  "Leading indicator (assumed)": 1
+ },
+ "P_H1_gt_H2": 0.97795,
+ "P_H3_gt_H4": 0.9897
+}

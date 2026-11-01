@@ -1,0 +1,16 @@
+@page { size: Letter; margin: 0.75in 0.8in; }
+body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10pt; line-height: 1.42; color:#1b1b1a; max-width: none; } math[display="block"] { margin: 6px 0; font-size: 105%; } nav#TOC { font-size: 9pt; } nav#TOC ul { list-style: none; padding-left: 14px; }
+h1 { font-size: 13.5pt; color:#1F3864; margin: 18px 0 6px; border-bottom:1px solid #e6e5e1; padding-bottom:3px; break-after: avoid; }
+h2 { font-size: 11pt; color:#1F3864; margin: 12px 0 4px; break-after: avoid; }
+header h1.title { font-size: 18pt; border:none; margin-bottom: 2px; }
+p.subtitle { font-size: 11.5pt; color:#52514e; margin: 0 0 4px; }
+p.author, p.date { color:#52514e; margin: 0; font-size: 9.5pt; }
+table { border-collapse: collapse; width: 100%; font-size: 8.6pt; margin: 6px 0 10px; break-inside: avoid; }
+th, td { border-bottom: 1px solid #e6e5e1; padding: 3px 5px; text-align: left; vertical-align: top; }
+th { background: #eef3fb; color:#52514e; }
+caption { caption-side: top; text-align:left; font-size:8.8pt; color:#52514e; margin-bottom:3px; }
+figure { margin: 8px 0 12px; break-inside: avoid; text-align:center; }
+figure img { max-width: 100%; }
+figcaption { font-size: 8.6pt; color:#52514e; text-align:left; margin-top: 3px; }
+code { font-size: 8.8pt; }
+blockquote { background:#f3f6fb; border-left:3px solid #2a78d6; margin:8px 0; padding:6px 10px; font-size:9.2pt; } blockquote p{margin:2px 0;}

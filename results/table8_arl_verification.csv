@@ -1,0 +1,26 @@
+metric,shift,ARL_simulated,ARL_markov_chain,median_simulated,rel_diff_pct
+All reported crashes,+0%,260.8,257.0,184.0,1.5
+All reported crashes,+10%,29.1,29.4,21.0,-1.1
+All reported crashes,+25%,6.7,6.8,6.0,-1.9
+All reported crashes,+50%,2.8,2.8,3.0,-0.4
+All reported crashes,+100%,1.5,1.4,1.0,0.3
+Any-injury crashes,+0%,264.9,262.1,188.0,1.1
+Any-injury crashes,+10%,92.1,93.5,69.0,-1.5
+Any-injury crashes,+25%,35.5,36.2,29.0,-2.0
+Any-injury crashes,+50%,15.8,16.0,14.0,-1.2
+Any-injury crashes,+100%,7.5,7.5,7.0,-0.4
+Airbag deployment,+0%,251.5,253.1,173.0,-0.7
+Airbag deployment,+10%,119.0,118.9,90.0,0.1
+Airbag deployment,+25%,56.6,55.9,45.0,1.3
+Airbag deployment,+50%,27.1,27.3,23.0,-0.6
+Airbag deployment,+100%,13.2,13.3,12.0,-0.5
+Serious injury or worse,+0%,257.5,261.9,187.0,-1.7
+Serious injury or worse,+10%,193.2,197.5,137.0,-2.2
+Serious injury or worse,+25%,139.1,139.8,104.0,-0.5
+Serious injury or worse,+50%,91.9,90.6,72.0,1.3
+Serious injury or worse,+100%,51.2,51.5,41.0,-0.5
+Leading indicator (assumed),+0%,273.6,274.9,195.0,-0.5
+Leading indicator (assumed),+10%,5.6,5.5,4.0,2.0
+Leading indicator (assumed),+25%,1.1,1.1,1.0,0.2
+Leading indicator (assumed),+50%,1.0,1.0,1.0,-0.0
+Leading indicator (assumed),+100%,1.0,1.0,1.0,0.0

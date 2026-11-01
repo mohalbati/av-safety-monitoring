@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software or note, please cite it as below."
+title: "Can Field Data Catch a Safety Regression? Test coverage, sequential monitoring and automated risk reporting for automated-driving software releases"
+version: "1.0"
+date-released: "2026-11-01"
+license: MIT
+repository-code: "https://github.com/mohalbati/av-safety-monitoring"
+authors:
+  - family-names: Albati
+    given-names: Mohammad
+keywords:
+  - automated driving systems
+  - field monitoring
+  - CUSUM
+  - statistical power
+  - test coverage
+  - risk management
+  - ISO 31000

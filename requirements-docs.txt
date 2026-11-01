@@ -1,0 +1,3 @@
+# Building the note (scripts/build_docs.py): also needs pandoc 3.x
+python-docx>=1.1
+playwright>=1.40

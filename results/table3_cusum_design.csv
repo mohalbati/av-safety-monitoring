@@ -1,0 +1,6 @@
+metric,expected_weekly_count,k,h,ARL0_weeks,weeks_to_alarm_+25%_median,weeks_to_alarm_+50%_median,weeks_to_alarm_+100%_median
+All reported crashes,20.846,23.355,16.93,259.0,6.0,3.0,1.0
+Any-injury crashes,1.79,2.005,10.91,271.0,30.0,14.0,7.0
+Airbag deployment,0.778,0.871,8.47,260.0,45.0,24.0,12.0
+Serious injury or worse,0.067,0.075,3.34,256.0,105.0,70.0,43.0
+Leading indicator (assumed),292.428,327.623,11.38,233.0,1.0,1.0,1.0

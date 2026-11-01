@@ -1,0 +1,16 @@
+metric,shift,shewhart_limit,shewhart_ARL0,ARL_shewhart,ARL_cusum
+All reported crashes,+25%,35,350.0,18.5,6.8
+All reported crashes,+50%,35,350.0,3.6,2.8
+All reported crashes,+100%,35,350.0,1.2,1.4
+Any-injury crashes,+25%,7,401.0,122.9,36.2
+Any-injury crashes,+50%,7,401.0,49.9,16.0
+Any-injury crashes,+100%,7,401.0,14.0,7.5
+Airbag deployment,+25%,5,800.0,307.2,55.9
+Airbag deployment,+50%,5,800.0,144.5,27.3
+Airbag deployment,+100%,5,800.0,46.9,13.3
+Serious injury or worse,+25%,2,466.0,301.5,139.8
+Serious injury or worse,+50%,2,466.0,211.7,90.6
+Serious injury or worse,+100%,2,466.0,121.7,51.5
+Leading indicator (assumed),+25%,340,282.0,1.1,1.1
+Leading indicator (assumed),+50%,340,282.0,1.0,1.0
+Leading indicator (assumed),+100%,340,282.0,1.0,1.0

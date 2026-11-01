@@ -1,0 +1,74 @@
+{
+ "fleet_miles_per_week_M": 2.924282077798107,
+ "fleet_miles_per_month_M": 12.671889003791797,
+ "serious_25pct_weeks": 1728.4,
+ "serious_25pct_years": 33.23846153846154,
+ "anyinj_25pct_weeks": 64.5,
+ "allcrash_25pct_weeks": 5.5,
+ "lead_25pct_weeks": 0.4,
+ "tests_1pct_95": 299,
+ "timeline": {
+  "All reported crashes": {
+   "false_alarms_before_change": [],
+   "first_detection_week": 61,
+   "detection_delay_weeks": 2,
+   "alarms_after_change": 15,
+   "final_S_over_h": 0.4685474625603604,
+   "events_after_change": 1409,
+   "expected_before": 938.0769230769231,
+   "bayes_P_rate_up": 1.0
+  },
+  "Any-injury crashes": {
+   "false_alarms_before_change": [],
+   "first_detection_week": 78,
+   "detection_delay_weeks": 19,
+   "alarms_after_change": 3,
+   "final_S_over_h": 0.9125032534934219,
+   "events_after_change": 134,
+   "expected_before": 80.53472842255987,
+   "bayes_P_rate_up": 0.999999974869433
+  },
+  "Airbag deployment": {
+   "false_alarms_before_change": [
+    31
+   ],
+   "first_detection_week": 64,
+   "detection_delay_weeks": 5,
+   "alarms_after_change": 3,
+   "final_S_over_h": 0.5514444730980838,
+   "events_after_change": 67,
+   "expected_before": 35.00365647124334,
+   "bayes_P_rate_up": 0.9999992874764688
+  },
+  "Serious injury or worse": {
+   "false_alarms_before_change": [],
+   "first_detection_week": 81,
+   "detection_delay_weeks": 22,
+   "alarms_after_change": 1,
+   "final_S_over_h": 0.32785321297820763,
+   "events_after_change": 7,
+   "expected_before": 3.0266319505210406,
+   "bayes_P_rate_up": 0.9788390854019634
+  },
+  "Leading indicator (assumed)": {
+   "false_alarms_before_change": [
+    31
+   ],
+   "first_detection_week": 60,
+   "detection_delay_weeks": 1,
+   "alarms_after_change": 45,
+   "final_S_over_h": 9.87788509233311,
+   "events_after_change": 19610,
+   "expected_before": 13159.269350091481,
+   "bayes_P_rate_up": 1.0
+  }
+ },
+ "p_false_alarm_2y": {
+  "All reported crashes": 0.32725,
+  "Any-injury crashes": 0.3,
+  "Airbag deployment": 0.29525,
+  "Serious injury or worse": 0.29975,
+  "Leading indicator (assumed)": 0.35175
+ },
+ "familywise_false_alarm_2y": 0.8493453732115317
+}

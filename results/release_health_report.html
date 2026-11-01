@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Release health report (demo)</title>
+<style>body{font-family:Arial,sans-serif;max-width:860px;margin:24px auto;color:#16202C;font-size:14px}
+h1{font-size:22px;margin:0} h2{font-size:15px;margin:18px 0 6px;color:#1F5FAF} table{border-collapse:collapse;width:100%}
+td,th{border-bottom:1px solid #DDE1E6;padding:4px 6px;text-align:left} th{background:#EEF2F7} .bluf{background:#FFF4EC;border-left:4px solid #EB6834;padding:8px 12px}
+.note{color:#5B6472;font-size:12px}</style></head><body>
+<h1>Release health report — simulated fleet, week 104</h1>
+<p class='note'>Generated automatically by scripts/run_all.py. Simulated data on baseline rates from public NHTSA SGO reports (Repo 1); not Waymo internal data.</p>
+<div class='bluf'><b>Bottom line.</b> 5 of 5 monitored metrics alarmed after a simulated +50% regression entered at week 60: All reported crashes, Any-injury crashes, Airbag deployment, Serious injury or worse, Leading indicator (assumed). Slowest to alarm: Serious injury or worse (22 weeks). Recommend holding the next release and bisecting the week-60 release.</div>
+<h2>1. Monitoring status (Poisson CUSUM tuned for +25%, one false alarm per metric every 5 years on average)</h2>
+<table><tr><th>Metric</th><th>Status</th><th>First alarm after week 60</th><th>False alarms before</th><th>Events since week 60 vs expected</th><th>P(rate increased)</th></tr><tr><td>All reported crashes</td><td><b style='color:#B3261E'>RED</b></td><td>61</td><td>0</td><td>1409 vs 938.1</td><td>1.000</td></tr><tr><td>Any-injury crashes</td><td><b style='color:#B3261E'>RED</b></td><td>78</td><td>0</td><td>134 vs 80.5</td><td>1.000</td></tr><tr><td>Airbag deployment</td><td><b style='color:#B3261E'>RED</b></td><td>64</td><td>1</td><td>67 vs 35.0</td><td>1.000</td></tr><tr><td>Serious injury or worse</td><td><b style='color:#B3261E'>RED</b></td><td>81</td><td>0</td><td>7 vs 3.0</td><td>0.979</td></tr><tr><td>Leading indicator (assumed)</td><td><b style='color:#B3261E'>RED</b></td><td>60</td><td>1</td><td>19610 vs 13159.3</td><td>1.000</td></tr></table>
+<p class='note'>With five metrics each tuned to one false alarm per five years, the chance of at least one false alarm somewhere in two years is 85%: every alarm needs a fast, cheap triage step.</p>
+<h2>2. What field data can and cannot catch</h2>
+<p>Weeks of whole-fleet driving (2.9M miles/week) to detect a +25% regression with 80% power:</p>
+<table><tr><th>Metric</th><th>Weeks</th></tr><tr><td>All reported crashes</td><td>5.5</td></tr><tr><td>Any-injury crashes</td><td>64.5</td></tr><tr><td>Airbag deployment</td><td>150.4</td></tr><tr><td>Serious injury or worse</td><td>1,728.4</td></tr><tr><td>Leading indicator (assumed)</td><td>0.4</td></tr></table>
+<p>Serious-injury regressions cannot be caught from field outcomes on any release timescale: release gating must rely on scenario testing and leading indicators.</p>
+<h2>3. Top data-based risks (injury crashes per 100M miles, 90% interval)</h2>
+<table><tr><th>ID</th><th>Hazard</th><th>Rate</th><th>Treatment status</th></tr><tr><td>H1</td><td>ADS vehicle struck while stationary (stopped or parked)</td><td>35.4 (29.8–41.7)</td><td>Monitor</td></tr><tr><td>H2</td><td>Collision while the ADS vehicle is moving</td><td>25.9 (21.1–31.3)</td><td>Monitor</td></tr><tr><td>H3</td><td>Conflict with cyclist pedestrian or scooter rider</td><td>5.6 (3.6–8.3)</td><td>Reduce</td></tr></table>
+<h2>4. Data gaps to close</h2><ul><li>H6: Sensor or compute degradation leading to an in-lane stop — owner Hardware / Systems</li><li>H7: Delayed or incorrect remote-assistance guidance — owner Operations</li></ul>
+<h2>5. Recommended actions</h2><ol><li>Hold the next release; bisect the week-60 release with the scenario library.</li>
+<li>Add the alarmed scenario types to the regression test set.</li><li>Instrument leading indicators for H6–H8 so they can be monitored.</li></ol>
+</body></html>

@@ -1,0 +1,21 @@
+metric,rate_per_M_mi,regression,miles_M_vs_known_baseline,weeks_vs_known_baseline,miles_M_release_vs_release,weeks_release_vs_release
+All reported crashes,7.1286,+10%,93.16,31.9,182.3,62.3
+All reported crashes,7.1286,+25%,16.18,5.5,31.4,10.7
+All reported crashes,7.1286,+50%,4.64,1.6,8.8,3.0
+All reported crashes,7.1286,+100%,1.43,0.5,2.7,0.9
+Any-injury crashes,0.612,+10%,1085.2,371.1,2123.1,726.0
+Any-injury crashes,0.612,+25%,188.5,64.5,365.2,124.9
+Any-injury crashes,0.612,+50%,54.1,18.5,102.4,35.0
+Any-injury crashes,0.612,+100%,16.64,5.7,31.5,10.8
+Airbag deployment,0.266,+10%,2475.13,846.4,4884.7,1670.4
+Airbag deployment,0.266,+25%,439.96,150.4,840.2,287.3
+Airbag deployment,0.266,+50%,124.53,42.6,235.6,80.6
+Airbag deployment,0.266,+100%,38.3,13.1,72.6,24.8
+Serious injury or worse,0.023,+10%,28831.35,9859.3,56492.2,19318.3
+Serious injury or worse,0.023,+25%,5054.47,1728.4,9717.3,3323.0
+Serious injury or worse,0.023,+50%,1437.27,491.5,2725.1,931.9
+Serious injury or worse,0.023,+100%,444.03,151.8,839.2,287.0
+Leading indicator (assumed),100.0,+10%,6.62,2.3,13.0,4.4
+Leading indicator (assumed),100.0,+25%,1.16,0.4,2.2,0.8
+Leading indicator (assumed),100.0,+50%,0.33,0.1,0.6,0.2
+Leading indicator (assumed),100.0,+100%,0.1,0.0,0.2,0.1
