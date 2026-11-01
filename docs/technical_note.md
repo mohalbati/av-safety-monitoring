@@ -2,7 +2,7 @@
 title: "Can Field Data Catch a Safety Regression?"
 subtitle: "Test coverage, sequential monitoring and automated risk reporting for automated-driving software releases"
 author: "Mohammad Albati, Ph.D."
-date: "Technical note v1.0 · November 2026 · Code: github.com/mohalbati/av-safety-monitoring"
+date: "Technical note v1.0 · November 2026 · Code: github.com/mohalbati/av-safety-monitoring · DOI 10.5281/zenodo.23858361"
 ---
 
 # Summary
