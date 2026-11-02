@@ -1,0 +1,40 @@
+digraph S {
+  graph [rankdir=TB, fontname="DejaVu Sans", fontsize=11, nodesep=0.2, ranksep=0.22, pad=0.15, compound=true, newrank=true];
+  node  [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=9.5, fillcolor="#FFFFFF", color="#5B6472", margin="0.10,0.05", width=2.7];
+  edge  [color="#9AA5B3", arrowsize=0.6, fontname="DejaVu Sans", fontsize=8.5];
+
+  subgraph cluster_dev { label=<<B>1 · PRODUCT DEVELOPMENT</B><BR/>how to build it safely>; style="rounded,filled"; fillcolor="#F4F6F8"; color="#5B6472";
+    iec61508 [label=<<B>IEC 61508</B><BR/>generic functional safety>];
+    iso26262 [label=<<B>ISO 26262:2018</B><BR/>faults; change management;<BR/>field monitoring>];
+    iso21448 [label=<<B>ISO 21448:2022</B> (SOTIF)<BR/>performance limits; validation<BR/>targets; operation phase>];
+    pas8800 [label=<<B>ISO/PAS 8800:2024</B><BR/>AI elements and data>];
+    sae21434 [label=<<B>ISO/SAE 21434:2021</B><BR/>cybersecurity engineering>];
+    iec61508 -> iso26262 -> iso21448 -> pas8800 -> sae21434 [style=invis];
+  }
+  subgraph cluster_ads { label=<<B>2 · ADS SAFETY CASE AND V&amp;V</B><BR/>what to argue and test>; style="rounded,filled"; fillcolor="#EEF3FB"; color="#2A78D6";
+    j3016 [label=<<B>SAE J3016:2021</B><BR/>automation levels; ODD>];
+    ts [label=<<B>ISO/TS 5083:2025</B><BR/>ADS design, V&amp;V, operation<BR/>(replaces ISO/TR 4804:2020)>];
+    ul [label=<<B>ANSI/UL 4600</B> (3rd ed., 2023)<BR/>safety case; safety performance<BR/>indicators (SPIs)>];
+    sc [label=<<B>ISO 34501–34505</B> (2022–2025)<BR/>scenarios; ODD; test cases>];
+    ieee [label=<<B>IEEE 2846-2022</B><BR/>assumptions about road users>];
+    j3016 -> ts -> ul -> sc -> ieee [style=invis];
+  }
+  subgraph cluster_reg { label=<<B>3 · REGULATION AND REPORTING</B><BR/>what authorities require>; style="rounded,filled"; fillcolor="#FDF3F3"; color="#B3261E";
+    sgo [label=<<B>NHTSA SGO 2021-01</B><BR/>crash reporting (3rd amendment,<BR/>effective June 2025)>];
+    unr [label=<<B>UN R185 + UN GTR No. 26</B> (2026)<BR/>SMS; safety case; in-service<BR/>monitoring and reporting>];
+    eu  [label=<<B>EU 2022/1426</B><BR/>ADS type approval; ISMR>];
+    r156 [label=<<B>UN R156</B> + ISO 24089:2023<BR/>software update management>];
+    r157 [label=<<B>UN R157</B><BR/>lane-keeping ADS (ALKS)>];
+    sgo -> unr -> eu -> r156 -> r157 [style=invis];
+  }
+  subgraph cluster_risk { label=<<B>4 · RISK AND STATISTICS</B><BR/>how to decide with data>; style="rounded,filled"; fillcolor="#FFF7EF"; color="#EB6834";
+    iso31000 [label=<<B>ISO 31000:2018</B>, <B>IEC 31010:2019</B><BR/>risk lifecycle and techniques>];
+    g51 [label=<<B>ISO/IEC Guide 51:2014</B><BR/>tolerable risk>];
+    cc [label=<<B>ISO 7870-2:2023</B> Shewhart<BR/><B>ISO 7870-4:2021</B> CUSUM>];
+    rel [label=<<B>IEC 61123:2019</B>, <B>IEC 61124:2023</B><BR/><B>MIL-HDBK-781A</B>: test plans>];
+    pra [label=<<B>NUREG/CR-6823</B><BR/>Bayesian rate estimation>];
+    iso31000 -> g51 -> cc -> rel -> pra [style=invis];
+  }
+  this [label=<<B>THIS REPORT</B>: turns the requirements to monitor, validate and manage change into numbers —<BR/>detectability (Sec. 4.1–4.4) · test-plan sizing (4.5) · CUSUM design and verification (4.6–4.8) ·<BR/>false-alarm budget (4.9–4.10) · leading indicators (4.11) · risk register (4.13) · automated report (4.14)>, fillcolor="#14213D", fontcolor="white", color="#14213D", fontsize=10.5, width=9];
+  sae21434 -> this [ltail=cluster_dev]; ieee -> this [ltail=cluster_ads]; r157 -> this [ltail=cluster_reg]; pra -> this [ltail=cluster_risk];
+}
