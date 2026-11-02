@@ -73,10 +73,10 @@ h is set by simulation so that the mean time between false alarms (ARL₀) is 26
 | Metric | +10% | +25% | +50% | +100% |
 |---|---|---|---|---|
 | Leading indicator (assumed) | 2.3 | 0.4 | 0.1 | <0.1 |
-| All reported crashes | 31.9 | 5.5 | 1.6 | 0.5 |
-| Any-injury crashes | 371 | 64.5 | 18.5 | 5.7 |
-| Airbag deployment | 846 | 150 | 42.6 | 13.1 |
-| Serious injury or worse | 9,859 | 1,728 | 492 | 152 |
+| All reported crashes | 31.9 | 5.6 | 1.6 | 0.5 |
+| Any-injury crashes | 372 | 65.1 | 18.4 | 5.7 |
+| Airbag deployment | 855 | 150 | 42.4 | 13.1 |
+| Serious injury or worse | 9,885 | 1,733 | 490 | 151 |
 
 A release typically lives for weeks. Field data can therefore protect against regressions in frequent outcomes, but not in severe ones: even a doubling of the serious-injury rate would take about three years of whole-fleet driving to show.
 

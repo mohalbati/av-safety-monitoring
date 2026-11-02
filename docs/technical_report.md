@@ -2,7 +2,7 @@
 title: "Can Field Data Catch a Safety Regression?"
 subtitle: "Test coverage, sequential monitoring and automated risk reporting for automated-driving software releases. Technical report"
 author: "Mohammad Albati, Ph.D."
-date: "Version 1.1 · November 2026 (adds the standards review and Section 5, the methods explained step by step) · Code: github.com/mohalbati/av-safety-monitoring · DOI 10.5281/zenodo.23858361"
+date: "Version 1.2 · November 2026 (adds the standards review, Section 5 with step-by-step explanations and reader questions, and an exact detectability search) · Code: github.com/mohalbati/av-safety-monitoring · DOI 10.5281/zenodo.23858361"
 ---
 
 # Summary
@@ -16,7 +16,7 @@ This report answers both questions with numbers. It uses event rates derived fro
 
 **Main findings**
 
-- **Field data catches only frequent outcomes quickly.** With the whole fleet driving about 2.9 million miles a week, a 25% increase in the all-crash rate is detectable in about **6 weeks** (80% power, 5% false alarm). The same increase takes about **65 weeks** for any-injury crashes, **150 weeks** for airbag deployments and about **1,730 weeks (33 years)** for serious-injury-or-worse crashes. Detecting a +25% change always needs about **116 expected baseline events**, whatever the metric; rare outcomes simply take longer to collect them.
+- **Field data catches only frequent outcomes quickly.** With the whole fleet driving about 2.9 million miles a week, a 25% increase in the all-crash rate is detectable in about **6 weeks** (80% power, 5% false alarm). The same increase takes about **65 weeks** for any-injury crashes, **150 weeks** for airbag deployments and about **1,730 weeks (33 years)** for serious-injury-or-worse crashes. Detecting a +25% change always needs about **117 expected baseline events**, whatever the metric; rare outcomes simply take longer to collect them.
 - **Staged rollouts make this worse.** A release running on 10% of the fleet needs ten times longer: about a year for a +25% change in all crashes.
 - **So release gating for severe outcomes must rely on testing and on leading indicators.** Showing that a scenario type fails less than 1% of the time, at 95% confidence, takes **299 failure-free runs**; for 0.1% it takes **2,995**. Plans that tolerate one or two failures need 1.6–2.1 times more runs but pass good releases more often.
 - **Sequential monitoring works, and its design can be verified.** Poisson CUSUM charts, calibrated by simulation to one false alarm per metric every five years, detect a +50% regression in a median of 3 weeks (all crashes) to 70 weeks (serious injuries). An independent Markov-chain calculation reproduces every simulated run length within 2.2%.
@@ -50,14 +50,14 @@ This report answers seven questions:
 
 ## 1.3 Contributions
 
-1. A quantitative map of what field data can and cannot catch, by metric and regression size, for a large robotaxi fleet, with a simple rule: about 116 expected baseline events to detect +25%.
+1. A quantitative map of what field data can and cannot catch, by metric and regression size, for a large robotaxi fleet, with a simple rule: about 117 expected baseline events to detect +25%.
 2. Test-plan sizing linked to risk targets, including plans that allow failures, a Bayesian alternative, and operating-characteristic curves.
 3. A calibrated, verified CUSUM monitoring design per metric, with a comparison against a simple threshold chart and a Markov-chain verification.
 4. Three robustness studies that matter in practice: the false-alarm budget, overdispersion and leading-indicator coupling.
 5. An ISO 31000 risk register with posterior uncertainty and ranking probabilities, and an automatically generated release health report.
 6. A review of the standards and regulations that govern ADS release safety (ISO 26262, ISO 21448, ISO/TS 5083, UL 4600, UN R156, UN R185, EU 2022/1426 and others), showing that they require field monitoring and change management but leave the statistical design open (Section 2.5).
 7. A step-by-step explanation of every method for non-specialists, with derivations, worked examples and figures (Section 5).
-8. Open code with ten verification tests; every number in this report is produced by `scripts/run_all.py`, `scripts/supplementary.py` and `scripts/explainer_figures.py`.
+8. Open code with eleven verification tests; every number in this report is produced by `scripts/run_all.py`, `scripts/supplementary.py` and `scripts/explainer_figures.py`.
 
 ## 1.4 Relationship to the companion projects
 
@@ -198,6 +198,8 @@ Waymo publishes crash-rate comparisons with human benchmarks (for example Kusano
 
 The leading indicator stands for any frequent event that on-board triggers or log review can count, such as hard-braking events, close-following events or disengagement-like interventions. Its value of 100 per million miles is chosen only to represent a metric that is about 14 times more frequent than reported crashes.
 
+**Questions a reader might ask.** *Why posterior medians and not simple averages?* For the three injury metrics the companion analysis estimated rates with a Bayesian method (Section 5.6); the median is its central value. With 72 or more events it is almost identical to the simple count divided by the miles. *Why include an assumed metric?* Because the main lesson of this report is that rare outcomes cannot be monitored quickly; a frequent precursor is the obvious alternative, and its behavior must be shown even though no public data exist.
+
 ## 3.2 Fleet exposure
 
 The companion analysis found 542 crashed vehicles reported in January–June 2026. At 7.13 crashes per million miles, that corresponds to about 76 million miles in six months:
@@ -205,6 +207,8 @@ The companion analysis found 542 crashed vehicles reported in January–June 202
 $$W_{\text{month}} = \frac{542}{7.13 \times 6} \approx 12.7 \ \text{million miles per month}, \qquad W = W_{\text{month}} \times \frac{12}{52} \approx 2.92 \ \text{million miles per week}$$
 
 Expected weekly counts are therefore 20.8 (all crashes), 1.79 (any injury), 0.78 (airbag), 0.067 (serious injury) and 292 (leading indicator).
+
+**Step by step.** (1) The companion analysis counted 542 crashed vehicles in January–June 2026. (2) At 7.13 crashes per million miles, 542 crashes correspond to 542 / 7.13 = 76 million miles. (3) Over six months, that is 12.7 million miles a month. (4) Converting months to weeks (×12/52) gives 2.92 million miles a week. *Why derive it instead of using a published number?* No weekly mileage is published for the period; deriving it from the crash count keeps the analysis internally consistent. If the true mileage is higher, every detection time in this report shrinks in proportion, and vice versa.
 
 ## 3.3 Release model
 
@@ -226,9 +230,9 @@ The power to detect a regression to λ₁ = (1 + r)λ₀ is
 
 $$\text{power}(M) = P\left(N \ge c(M) \mid \lambda_1 M\right) = 1 - F_{\text{Pois}}\left(c(M) - 1;\ \lambda_1 M\right)$$
 
-Because counts are discrete, power is not monotone in M: it rises in a saw-tooth as c(M) steps up. The exposure reported is therefore the smallest M after which power stays at or above 80% (searched on a fine logarithmic grid from 0.001 to 100,000 million miles). Weeks of fleet driving are M / W.
+Because counts are discrete, power is not monotone in M: it rises in a saw-tooth as c(M) steps up. The exposure reported is therefore the smallest M after which power stays at or above 80%. It is computed exactly, tooth by tooth of the saw-tooth, rather than on a grid of trial mileages (Section 5.3.6). Weeks of fleet driving are M / W.
 
-**Worked example (any-injury crashes, +25%).** The reported exposure is M = 188.5 million miles (64.5 weeks). The expected baseline count is 0.612 × 188.5 = 115.4 events, the critical count is c = 134 (actual false-alarm rate 4.8%), the expected count under the regression is 144.2, and the power is 81.3%.
+**Worked example (any-injury crashes, +25%).** The reported exposure is M = 190.5 million miles (65.1 weeks). The expected baseline count is 0.612 × 190.5 = 116.6 events, the critical count is c = 136 (actual false-alarm rate 4.2%), the expected count under the regression is 145.7, and the power is 80.0%. Section 5.3 explains each step.
 
 ## 4.2 Release-versus-release comparison
 
@@ -328,7 +332,7 @@ The code is a small Python package (`src/avmon`): `rates.py` (inputs and labels)
 
 # 5. The methods explained step by step
 
-Section 4 states each method briefly, as a specialist would. This section explains the same methods from first principles, for a reader who has no background in statistics. For every method it gives the idea in plain words, the science behind it, a derivation of every equation in small steps, the meaning of every symbol, the assumptions and where they come from, and a worked example with the actual numbers of this study. Figures 5.1 to 5.10 illustrate the concepts and the examples.
+Section 4 states each method briefly, as a specialist would. This section explains the same methods from first principles, for a reader who has no background in statistics. For every method it gives the idea in plain words, the science behind it, a derivation of every equation in small steps, the meaning of every symbol, the assumptions and where they come from, and a worked example with the actual numbers of this study. Figures 5.1 to 5.12 illustrate the concepts and the examples. Each subsection also ends with the method told as a short sequence of steps and with the questions a reader is likely to ask, answered in plain words.
 
 Nothing in this section changes the analysis; it explains it. All numbers can be reproduced with `python scripts/explainer_figures.py`, which prints them and draws the figures.
 
@@ -426,68 +430,198 @@ $$P(X=x)=\frac{m^x e^{-m}}{x!},\qquad x=0,1,2,\dots \qquad (5.4)$$
 
 When *m* is larger than about 20, the Poisson distribution looks like a bell curve, the **normal distribution**, with the same mean *m* and standard deviation √*m* (right panel of Figure 5.1). This is a consequence of the central limit theorem: a Poisson(*m*) count is the sum of many independent small counts, and sums of many independent pieces are approximately normal. The approximation lets us write simple formulas: a value *z* standard deviations above the mean is exceeded with a probability that depends only on *z*. For example, 5% of a normal distribution lies more than *z*~0.95~ = 1.645 standard deviations above its mean, and 20% lies more than *z*~0.80~ = 0.842 standard deviations below its mean.
 
+### 5.2.4 Step by step, and questions a reader might ask
+
+**The story in four steps.** (1) The fleet drives a known number of miles each week. (2) Each mile carries a tiny, constant chance of an event. (3) Adding up millions of tiny independent chances gives a Poisson count, described completely by one number, its expected value *m*. (4) The count wobbles around *m* by about √*m*, purely by chance.
+
+**If the true rate is constant, why does the weekly count change at all?** Because each week is a new draw of millions of tiny chances. Two weeks with exactly the same safety performance will almost never produce the same count, just as two rounds of 100 coin tosses rarely give the same number of heads.
+
+**Why does the wobble grow only like √*m*, not like *m*?** Independent random pieces partly cancel each other: some weeks have a few more events, others a few fewer. Variances of independent pieces add, so the variance grows like *m* and the standard deviation, its square root, like √*m*. Relative to the mean, the wobble *shrinks*: √*m* / *m* = 1/√*m*. For all crashes (*m* = 20.8) the wobble is 22% of the mean; for the leading indicator (*m* = 292) only 6%; for serious injuries (*m* = 0.067) it is 386% of the mean. Frequent metrics are therefore much easier to read than rare ones.
+
+**When is the Poisson model wrong?** When events are not independent (for example one incident producing several reports) or when the rate is not constant over the period (weather, city mix, demand). Section 5.12 measures the second effect.
+
 ## 5.3 Detectability: the exact Poisson test (Section 4.1)
 
-### 5.3.1 The idea
+This subsection follows one example from start to finish: **any-injury crashes**, and the question **"Did the new software release make them 25% more frequent?"** Four ideas fit together into one story: the noise in counts, the critical count (the alarm line), the false-alarm rate and the power. Together they answer the detectability question: how many miles must be driven before the test works.
 
-After a release, we count the events *N* in *M* million miles. If the release is fine, *N* should be close to λ₀*M*. If *N* is much larger, we suspect a regression. The question is: how large must *N* be before we raise an alarm, and how many miles do we need before a real regression is likely to push *N* above that level?
+A note on terms: *power* here is a probability (the chance that the test catches a real problem). It has nothing to do with "power laws".
 
-### 5.3.2 Two kinds of error
+### 5.3.1 Step 1: counts are noisy
+
+From the fleet's long history, any-injury crashes happen at **0.612 per million miles**. A new release ships, and we count injury crashes.
+
+Suppose the fleet drives 190.5 million miles on the new release. If nothing changed, we **expect** 0.612 × 190.5 ≈ **117** injury crashes. But we will not see exactly 117. Crashes are random, like dice rolls: even if the release is perfectly fine, the count might be 105, 120 or 128. By Section 5.2, the typical wobble is about √117 ≈ ±11.
+
+So if we see, say, 125, we cannot immediately tell whether the release is worse or whether we had an unlucky stretch. That is the whole problem.
+
+### 5.3.2 Step 2: two ways to be wrong
 
 Any rule that decides from noisy data can be wrong in two ways:
 
-- **False alarm** (type I error): the rule alarms although nothing changed. Its probability is α, set here to 5%.
-- **Missed detection** (type II error): the rule stays silent although the rate really increased. The **power** of the rule is the probability of *not* missing it; we require 80%.
+- **False alarm** (type I error): the rule alarms although nothing changed. Its probability is α. The convention, used here, is α = 5%: we accept blaming a good release one time in twenty.
+- **Missed detection** (type II error): the rule stays silent although the rate really rose. The **power** of the rule is the probability of *not* missing it. The convention is to require 80%.
 
-The values 5% and 80% are the conventions of applied statistics (Cohen, 1988); Section 4.1 uses them so that results can be compared with other studies.
+The values 5% and 80% are the standard conventions of applied statistics (Cohen, 1988). They are a choice: a stricter false-alarm limit or a higher power would need more miles.
 
-### 5.3.3 The critical count
+### 5.3.3 Step 3: the critical count (where to draw the alarm line)
 
-Under "no regression" (the **null hypothesis**), *N* ~ Poisson(λ₀*M*). The rule "alarm if *N* ≥ *c*" has false-alarm probability *P*(*N* ≥ *c* | λ₀*M*). We choose the smallest *c* that keeps this at or below α:
+We need a rule: **"If the count reaches *c* or more, raise an alarm."** The number *c* is the **critical count**. Where should the line go?
+
+- **Too low** (say 120), and good releases trip it constantly, because 120 is well within normal luck.
+- **Too high** (say 160), and it almost never trips, even for a bad release.
+
+The line is placed where a release that is **perfectly fine** crosses it only **5% of the time**. In symbols, *c* is the smallest whole number for which the false-alarm probability is at most α:
 
 $$c(M)=\min\{\,n:\ P(N\ge n\mid \lambda_0 M)\le\alpha\,\},\qquad P(N\ge n\mid\mu)=1-\sum_{j=0}^{n-1}\frac{\mu^j e^{-\mu}}{j!} \qquad (5.5)$$
 
-The test is called **exact** because it uses the Poisson probabilities themselves, not an approximation. Because counts are whole numbers, the actual false-alarm probability is usually a little below α.
+: Table 5.3. Choosing the alarm line for any-injury crashes at 190.5 million miles (116.6 crashes expected if the release is fine).
 
-### 5.3.4 Power
+| If the alarm line is at… | Chance that a *good* release crosses it (false alarm) | Allowed (≤ 5%)? |
+|---|---|---|
+| 132 or more | 8.5% | No |
+| 133 or more | 7.2% | No |
+| 134 or more | 6.1% | No |
+| **135 or more** | **5.1%** | **No: just above 5%** |
+| **136 or more** | **4.2%** | **Yes** |
+| 137 or more | 3.5% | Yes, but stricter than needed |
 
-If the release has increased the rate to λ₁ = (1 + *r*)λ₀, then *N* ~ Poisson(λ₁*M*), and the chance that it reaches the critical count is
+So **136 is the lowest line that respects the 5% limit**: the critical count. The false-alarm rate comes out at 4.2% rather than exactly 5% because counts are whole numbers. The line cannot be placed at 135.4; it has to be the first whole number that stays at or below 5%.
+
+The test is called **exact** because it uses the Poisson probabilities themselves rather than a bell-curve approximation.
+
+### 5.3.4 Step 4: power (would the line catch a real problem?)
+
+Now suppose the release really is **25% worse**. The rate becomes 0.612 × 1.25 = 0.765, so in the same 190.5 million miles we expect **145.7** crashes. The count is still random: it might be 135, 150 or 130. How often does it land at or above our line of 136?
 
 $$\text{power}(M)=P\big(N\ge c(M)\mid \lambda_1 M\big) \qquad (5.6)$$
 
-More miles mean larger expected counts, and the two distributions (with and without regression) separate, because their means grow in proportion to *M* while their widths grow only with √*M*. That is why power increases with exposure. The search in Section 4.1 finds the smallest *M* after which power stays at or above 80%.
+The answer is **80% of the time**. That is the power. The test catches this bad release four times out of five; one time in five, the bad release has an unluckily low count and slips under the line (a missed detection, 20%).
 
-![Figure 5.2. The exact test for a +25% regression in any-injury crashes at the reported exposure. Blue: counts expected with no regression; orange: counts expected after a +25% regression. The test alarms at 134 or more events. The dark blue tail is the false-alarm probability; the orange area to the right of the red line is the power.](../results/figE2_exact_test.png){width=100%}
+![Figure 5.2. The exact test for a +25% regression in any-injury crashes at 190.5 million miles. Blue: counts expected if nothing changed (centered at 116.6); orange: counts expected after a +25% regression (centered at 145.7). The red line is the critical count, 136. The dark blue area right of the line is the false-alarm rate (4.2%); the orange area right of the line is the power (80%).](../results/figE2_exact_test.png){width=100%}
 
-### 5.3.5 Worked example (any-injury crashes, +25%)
+### 5.3.5 Step 5: detectability (how many miles until the test works?)
 
-1. Baseline rate λ₀ = 0.612 per million miles; regression *r* = 0.25, so λ₁ = 0.765.
-2. The search gives *M* = 188.5 million miles, which at 2.92 million miles a week is 64.5 weeks.
-3. Expected count with no regression: μ₀ = 0.612 × 188.5 = 115.4. Its standard deviation is √115.4 = 10.7.
-4. Critical count from Eq. (5.5): *c* = 134. The probability of 134 or more events when 115.4 are expected is 0.048, below 0.05; the probability of 133 or more is above 0.05.
-5. Expected count after the regression: μ₁ = 0.765 × 188.5 = 144.2.
-6. Power from Eq. (5.6): *P*(*N* ≥ 134 | 144.2) = 0.813.
+The amount of driving decides how far apart the two hills in Figure 5.2 are. Table 5.4 repeats the calculation of Steps 3 and 4 for several mileages.
 
-So after 64.5 weeks of whole-fleet driving, the test would catch a +25% regression in any-injury crashes four times out of five, and would raise a false alarm in fewer than one release in twenty. Figure 5.2 shows the two distributions.
+: Table 5.4. The same test at different exposures (any-injury crashes, +25% regression).
 
-### 5.3.6 Why detection always needs about 116 expected events
+| Million miles driven | Weeks of whole-fleet driving | Expected if fine | Expected if +25% | Alarm line *c* | False alarm | **Power** |
+|---|---|---|---|---|---|---|
+| 20 | 7 | 12 | 15 | 19 | 4.4% | **20%** |
+| 50 | 17 | 31 | 38 | 41 | 4.2% | **35%** |
+| 100 | 34 | 61 | 77 | 75 | 4.8% | **58%** |
+| 150 | 51 | 92 | 115 | 109 | 4.4% | **72%** |
+| **190.5** | **65.1** | **117** | **146** | **136** | **4.2%** | **80%** |
+| 250 | 85 | 153 | 191 | 175 | 4.3% | 89% |
+| 300 | 103 | 184 | 230 | 207 | 4.8% | 94% |
 
-The results in Table 3 show that the number of *expected baseline events* needed, λ₀*M*, is the same for every metric. The normal approximation shows why. Write μ₀ = λ₀*M* for the expected baseline count.
+With only 20 million miles, you expect 12 crashes if the release is fine and 15 if it is worse. A difference of 3 is swamped by a wobble of about ±3.5, so a bad release is caught only 20% of the time.
 
-1. With no regression, *N* ≈ Normal(μ₀, √μ₀). A 5% false-alarm rule alarms when *N* exceeds μ₀ + *z*~0.95~√μ₀.
-2. After a regression, *N* ≈ Normal((1 + *r*)μ₀, √((1 + *r*)μ₀)). For 80% power, the alarm level must lie *z*~0.80~ standard deviations *below* this mean: (1 + *r*)μ₀ − *z*~0.80~√((1 + *r*)μ₀).
-3. Set the two expressions equal:
+**Why more miles help.** The *gap* between the two expected counts grows in proportion to the miles (0.25 × 0.612 × *M*), but the random *wobble* grows only with the square root of the miles (√(0.612 *M*)). Multiply the miles by 4 and the gap grows 4 times while the wobble only doubles. So the two hills pull apart (Figure 5.3), and the test becomes more reliable.
 
-$$\mu_0+z_{0.95}\sqrt{\mu_0}=(1+r)\mu_0-z_{0.80}\sqrt{(1+r)\mu_0}$$
+![Figure 5.3. The two hills of Figure 5.2 at three exposures. At 20 million miles they overlap almost completely and power is 20%; at 190.5 million miles they are separated enough for 80% power.](../results/figE2b_hills_separate.png){width=100%}
 
-4. Move the μ₀ terms to one side and divide by √μ₀: *r*√μ₀ = *z*~0.95~ + *z*~0.80~√(1 + *r*).
-5. Square both sides:
+**"The search."** The detectability of Section 4.1 is the **smallest mileage at which the power reaches 80% and stays there**. For any-injury crashes and a +25% regression, that is **190.5 million miles**, which at 2.92 million miles a week is **65.1 weeks**: more than a year of whole-fleet driving to reliably catch a +25% rise in injury crashes.
+
+### 5.3.6 Step 6: the saw-tooth (why "and stays there")
+
+Power does not rise smoothly with the miles. It rises, then suddenly drops, again and again (Figure 5.4). The reason is one simple fact: **the alarm line must be a whole number, but expected counts grow smoothly.**
+
+As the fleet accumulates miles, the expected count grows a little at a time: 114.0, 114.1, 114.2, and so on. The alarm line cannot grow a little; it stays at, say, 133, and then jumps to 134. Each cycle has three phases:
+
+1. **The line sits still while the miles grow.** Both hills slide to the right past a fixed line. The blue hill (good release) pushes more of itself past the line, so the false-alarm rate creeps up (4.3% → 4.5% → 4.8%). The orange hill (bad release) also pushes more of itself past the line, so the power creeps up too (79.3% → 80.2% → 81.0%).
+2. **The false-alarm rate is about to exceed 5%, so the line must step up by one.** Moving the line one step to the right cuts a slice off both hills at once: the false-alarm rate drops (4.8% → 4.3%), and **so does the power** (81.0% → 79.5%).
+3. **Repeat.**
+
+: Table 5.5. The saw-tooth in numbers (any-injury crashes, +25% regression).
+
+| Million miles | Expected if fine | Alarm line | False alarm | Power | What happens |
+|---|---|---|---|---|---|
+| 186.0 | 113.8 | 133 | 4.3% | 79.3% | |
+| 186.5 | 114.1 | 133 | 4.5% | 80.2% | creeping up |
+| 187.0 | 114.4 | 133 | 4.8% | 81.0% | creeping up |
+| **187.5** | 114.8 | **134** | **4.3%** | **79.5%** | **line steps up; both drop** |
+| 188.0 | 115.1 | 134 | 4.5% | 80.4% | creeping up |
+| 188.5 | 115.4 | 134 | 4.8% | 81.3% | creeping up |
+| **189.0** | 115.7 | **135** | **4.3%** | **79.8%** | **line steps up; both drop** |
+
+![Figure 5.4. The saw-tooth. Top: the alarm line steps up by one crash at a time. Middle: the false-alarm rate creeps up to 5% and drops at each step. Bottom: power rises with the miles but drops at each step; it first touches 80% at 179.6 million miles, falls back below it several times, and stays above it only from 190.5 million miles.](../results/figE2c_sawtooth.png){width=100%}
+
+Because of the teeth, power first touches 80% at about **179.6 million miles** and then **falls back** at the next step. Saying "80% power is reached at 179.6 million miles" would be misleading, because a little more driving would make the test *less* powerful. So the rule is to find the point after which **the bottoms of the teeth** stay above 80%. From there on, the test is at least 80% reliable whatever the exact mileage. The overall trend still climbs, because more miles always pull the hills further apart; the steps only make the climb jagged.
+
+*How the program finds this point exactly.* Within each tooth, power only rises, so its lowest point is just after the line steps up. The program computes, for every possible alarm line *n*, the expected count at which the line steps up and the power just after that step, finds the last tooth whose lowest point is below 80%, and returns the point inside that tooth where the power reaches 80%. This uses the identity *P*(*N* ≥ *n* | μ) = *P*(*n*, μ), the regularized incomplete gamma function, so no grid of trial mileages is needed (`power.py::expected_events_to_detect`).
+
+### 5.3.7 Step 7: where the rule of thumb comes from
+
+**It was first seen in the results.** Multiplying the miles needed by each metric's rate gives the number of crashes you would *expect* over that distance if nothing had changed:
+
+: Table 5.6. Expected baseline events at the detection point, for a +25% regression.
+
+| Metric | Rate per million miles | Miles needed | Expected baseline events = rate × miles |
+|---|---|---|---|
+| All reported crashes | 7.13 | 16.3 million | **117** |
+| Any-injury crashes | 0.612 | 190.5 million | **117** |
+| Airbag deployment | 0.266 | 438 million | **117** |
+| Serious injury or worse | 0.023 | 5,068 million | **117** |
+
+The miles differ by a factor of 300, but the expected count is the same every time.
+
+**Why: the test only "sees" the expected count.** A Poisson count has only *one* setting, its expected value (Section 5.2). A pile of 117 expected events behaves exactly the same whether it came from 16 million miles at a high rate or from 5 billion miles at a tiny rate: same spread, same wobble, same probabilities for every outcome. The rate and the miles enter the test only through their product, the expected count μ₀ = λ₀*M*. So "how much evidence is enough?" has a single answer in units of expected events, valid for every metric. Metrics differ only in how long they take to *collect* that many events.
+
+**Where the number comes from: signal versus noise.** Write μ₀ for the expected baseline count.
+
+- **Signal:** a +25% regression adds 0.25 × μ₀ extra events on average. That is what we are trying to see.
+- **Noise:** random luck makes the count wobble by about √μ₀ (the standard deviation of a Poisson count).
+
+To catch the regression reliably, the signal must stand clearly above the noise. Two requirements add up:
+
+- **No more than 5% false alarms:** the alarm line must sit *z*~0.95~ = **1.645** wobbles above the "fine" average.
+- **At least 80% power:** the "+25%" average must sit *z*~0.80~ = **0.842** wobbles above the alarm line. The wobble of the regressed count is slightly larger, √(1.25 μ₀), so this distance is 0.842 × √1.25 ≈ **0.94** baseline wobbles.
+
+Together the signal must be at least 1.645 + 0.94 ≈ **2.59 wobbles**:
+
+$$0.25\,\mu_0\;\ge\;2.59\,\sqrt{\mu_0}\;\;\Rightarrow\;\;\sqrt{\mu_0}\ge\frac{2.59}{0.25}=10.4\;\;\Rightarrow\;\;\mu_0\ge 107$$
+
+For a general regression size *r*, the same steps give
 
 $$\mu_0=\lambda_0 M=\frac{\left(z_{0.95}+z_{0.80}\sqrt{1+r}\right)^2}{r^2} \qquad (5.7)$$
 
-The rate λ₀ does not appear on the right side, so the number of expected events needed depends only on the size of the regression and on the error rates. For *r* = 0.25: (1.645 + 0.842 × 1.118)² / 0.0625 = (2.586)² / 0.0625 = 107. The exact Poisson test needs a few more, 116, because counts are discrete and the requirement that power *stays* above 80% is slightly stricter (Figure 5.3). For a serious-injury rate of 0.067 events per week, 116 events take 116 / 0.067 = 1,730 weeks, or 33 years.
+The quick formula gives about **107** expected events for *r* = 0.25. The exact Poisson calculation gives **117**, a little higher because the alarm line must be a whole number and the power has to *stay* above 80% across the saw-tooth (Figure 5.5).
 
-![Figure 5.3. Expected baseline events needed to detect a regression: the normal-approximation formula (line) and the exact test (points). The rule depends only on the size of the regression, not on the metric.](../results/figE3_events_rule.png){width=92%}
+**The size of the regression matters a lot.** The signal is *r* × μ₀ and the noise √μ₀, so the events needed grow roughly as 1/*r*²:
+
+: Table 5.7. Expected baseline events needed (exact test, 5% false alarm, 80% power).
+
+| Regression to detect | Normal approximation, Eq. (5.7) | Exact Poisson test |
+|---|---|---|
+| +10% | 639 | **665** |
+| +25% | 107 | **117** |
+| +50% | 29 | **33** |
+| +100% (doubling) | 8 | **10** |
+
+A regression half as large needs about four times the evidence. This is the same square-root law behind sample sizes in opinion polls: halving the margin of error needs four times as many people.
+
+![Figure 5.5. Expected baseline events needed to detect a regression: the normal-approximation formula (line) and the exact test (points). The rule depends only on the size of the regression, not on the metric.](../results/figE3_events_rule.png){width=92%}
+
+**How to use it.** *Weeks to detect = events needed ÷ expected events per week.* For a +25% regression:
+
+- all reported crashes: 117 ÷ 20.8 per week ≈ **5.6 weeks**;
+- any-injury crashes: 117 ÷ 1.79 per week ≈ **65 weeks**;
+- serious injury or worse: 117 ÷ 0.067 per week ≈ **1,730 weeks (33 years)**.
+
+This reproduces the whole detectability table (Table 2) without a search. It also shows why rare outcomes cannot be monitored quickly from field data: the evidence needed is fixed, and rare events simply arrive too slowly to collect it.
+
+### 5.3.8 Questions a reader might ask
+
+**Why 5% and 80%, and not something else?** They are conventions, chosen so that results can be compared across studies. A program can choose others. Tightening the false-alarm limit to 1% raises *z*~0.95~ = 1.645 to *z*~0.99~ = 2.33 in Eq. (5.7), and raising power to 90% raises 0.842 to 1.28; both increase the events needed.
+
+**Does the test look at the data only once?** Yes. This test is decided once, after *M* miles. Looking repeatedly at a fixed-sample test inflates the false-alarm rate. Continuous weekly monitoring is the job of the CUSUM (Section 5.8), which is designed for repeated looks.
+
+**Is the baseline really known?** For frequent metrics, nearly: thousands of events pin it down. For rare outcomes it is uncertain; Section 5.6 shows how much that changes the answer. When there is no long baseline at all, Section 5.4 compares two releases instead.
+
+**What does "detect" mean in practice?** That the count crosses the alarm line. It does not identify the cause; an alarm starts an investigation.
+
+**An analogy.** Think of a smoke detector. The critical count is its sensitivity setting; the false-alarm rate is how often it goes off when you are only making toast; power is how often it goes off when there really is a fire; and detectability is how much smoke has to build up before it reliably goes off. For rare outcomes, such as serious injuries, the smoke builds up very slowly.
 
 *Assumptions.* Events are Poisson (independent, constant rate within the period); the baseline rate is known (relaxed in Section 5.6); the regression is a step change at the release; the whole fleet runs the release (relaxed in Section 5.5).
 
@@ -503,7 +637,15 @@ $$\operatorname{Var}\!\left[\ln\frac{\hat\lambda_1}{\hat\lambda_0}\right]\approx
 
 $$\ln(1+r)=(z_{0.95}+z_{0.80})\sqrt{\frac{1}{M}\left(\frac{1}{\lambda_0}+\frac{1}{\lambda_1}\right)}\;\Rightarrow\; M=\frac{(z_{0.95}+z_{0.80})^2\left(\frac{1}{\lambda_0}+\frac{1}{\lambda_1}\right)}{[\ln(1+r)]^2} \qquad (5.9)$$
 
-*Worked example (any-injury crashes, +25%).* *z*~0.95~ + *z*~0.80~ = 2.486, squared 6.183. 1/0.612 + 1/0.765 = 1.634 + 1.307 = 2.941. [ln 1.25]² = 0.2231² = 0.0498. *M* = 6.183 × 2.941 / 0.0498 = **365 million miles per release**, almost twice the 189 million miles needed against a known baseline. The factor of about two arises because the old release's rate is now uncertain too, which roughly doubles the variance.
+*Worked example (any-injury crashes, +25%).* *z*~0.95~ + *z*~0.80~ = 2.486, squared 6.183. 1/0.612 + 1/0.765 = 1.634 + 1.307 = 2.941. [ln 1.25]² = 0.2231² = 0.0498. *M* = 6.183 × 2.941 / 0.0498 = **365 million miles per release**, almost twice the 190.5 million miles needed against a known baseline. The factor of about two arises because the old release's rate is now uncertain too, which roughly doubles the variance.
+
+**Step by step.** (1) Drive the old and the new release *M* miles each. (2) Count events in each. (3) Compare the two rates by their ratio, on a log scale. (4) Alarm if the log ratio is more than 1.645 standard deviations above zero.
+
+**Why does comparing two releases need about twice the miles?** With a known baseline, only the new count is noisy. With two releases, both counts are noisy, and their noises add: Eq. (5.8) has two terms instead of roughly one. Twice the variance needs about twice the data to reach the same certainty. For any-injury crashes, 365 million miles per release are needed instead of 190.5, a factor of 1.9.
+
+**Why use the logarithm of the ratio?** A ratio is lopsided: it cannot go below 0 but can go far above 1. Its logarithm is symmetric around 0 (no change) and close to a bell curve, so the simple *z*-values of Section 5.2.3 apply.
+
+**When would a team use this instead of Section 5.3?** When there is no long, stable history: a new city, a new vehicle platform, or a release that changes the operating domain so much that the old rate no longer applies.
 
 ## 5.5 Staged rollout (Section 4.3)
 
@@ -511,7 +653,13 @@ If a release runs on a fraction *f* of the fleet, it accumulates *f* × *W* mill
 
 $$T_f=\frac{M}{f\,W} \qquad (5.10)$$
 
-*Worked example.* Any-injury crashes, +25%, on 10% of the fleet: 188.5 / (0.10 × 2.92) = **645 weeks**, ten times the 64.5 weeks for the whole fleet. A canary release therefore limits how many people are exposed while a problem is found by other means; it is not a fast statistical test of crash outcomes.
+*Worked example.* Any-injury crashes, +25%, on 10% of the fleet: 190.5 / (0.10 × 2.92) = **651 weeks**, ten times the 65.1 weeks for the whole fleet. A canary release therefore limits how many people are exposed while a problem is found by other means; it is not a fast statistical test of crash outcomes.
+
+**Questions a reader might ask.**
+
+**Why doesn't a staged rollout change the miles needed?** The test only cares about how many events the release has had a chance to produce, which depends on its miles, not on how many vehicles drove them. 190.5 million miles are 190.5 million miles whether 10% or 100% of the fleet drove them; at 10% they simply take ten times longer to accumulate.
+
+**Then what is a staged rollout good for?** Limiting harm while a problem is found. If a release is bad, only 10% of the fleet's trips are exposed while engineers investigate alarms from frequent metrics, field reports and testing. It is a risk-reduction measure, not a faster statistical test (Table 4).
 
 ## 5.6 Uncertainty in the baseline: Bayesian estimation (Section 4.4)
 
@@ -542,11 +690,21 @@ This is the shape of a **gamma distribution** with shape *k* + ½ and rate *M*, 
 1. Posterior: Gamma(6.5, 271.3).
 2. Mean: 6.5 / 271.3 = 0.0240 per million miles. Median: 0.0227 (the value used in Table 1, rounded to 0.023). The simple estimate 6 / 271.3 = 0.0221 lies close by.
 3. 5th and 95th percentiles: 0.0109 and 0.0412. The rate is known only to within a factor of about four.
-4. Each of these values is put into the detectability calculation of Section 5.3. A lower rate means fewer events per week and therefore a longer time to collect the ~116 events: 70 years at the 5th percentile, 34 years at the median and 18 years at the 95th percentile (Table 6).
+4. Each of these values is put into the detectability calculation of Section 5.3. A lower rate means fewer events per week and therefore a longer time to collect the ~117 events: 71 years at the 5th percentile, 34 years at the median and 19 years at the 95th percentile (Table 6).
 
-![Figure 5.4. Bayesian updating of the serious-injury rate. Left: the Jeffreys prior, the likelihood of 6 events in 271.3 million miles, and the resulting posterior (scaled to the same height). Right: the posterior with its 5th, 50th and 95th percentiles.](../results/figE4_bayes_baseline.png){width=100%}
+![Figure 5.6. Bayesian updating of the serious-injury rate. Left: the Jeffreys prior, the likelihood of 6 events in 271.3 million miles, and the resulting posterior (scaled to the same height). Right: the posterior with its 5th, 50th and 95th percentiles.](../results/figE4_bayes_baseline.png){width=100%}
 
 *Interpretation.* A Bayesian 90% interval states directly that, given the data and the prior, the rate lies between 0.0109 and 0.0412 with 90% probability. A frequentist confidence interval answers a different question (how often the interval-making procedure covers the true value in repeated experiments), but with the Jeffreys prior the two kinds of interval are numerically close.
+
+### 5.6.5 Step by step, and questions a reader might ask
+
+**The story in four steps.** (1) Before the data, admit how little we know (the prior). (2) Score every possible rate by how well it explains 6 events in 271.3 million miles (the likelihood). (3) Multiply and rescale: the posterior. (4) Read off the median and a range, and carry the range into every calculation that uses the rate.
+
+**Why not simply use 6 / 271.3 = 0.022?** It is a fine single guess, but it hides how uncertain it is. With only six events, one more or one fewer would change it by 17%. The posterior shows the whole range of rates that are consistent with the data.
+
+**Does the prior decide the answer?** Hardly, here. The Jeffreys prior adds the equivalent of half an event, so Gamma(6.5, 271.3) instead of Gamma(6, 271.3); the median moves from 0.0209 to 0.0227. With 166 injury crashes, the prior's effect is negligible. It matters only when counts are very small.
+
+**Why does a lower rate mean a longer detection time?** Because detection needs about 117 expected events (Section 5.3.7). If the true rate is half as large, those events take twice as long to arrive.
 
 ## 5.7 Test coverage: how many scenario runs (Section 4.5)
 
@@ -589,11 +747,31 @@ The Bayesian version puts the Jeffreys prior on *p*. For a pass/fail trial the F
 
 $$p(p\mid 0\text{ failures in } n)\propto p^{-1/2}(1-p)^{n-1/2}\;\Rightarrow\;\text{Beta}\left(\tfrac12,\ n+\tfrac12\right) \qquad (5.17)$$
 
-We require *P*(*p* < *p*₀ | data) ≥ *C*. *Worked example:* for 1% at 95%, the smallest such *n* is **191** (posterior probability 0.9501). The saving relative to 299 runs comes from the prior, which already places much of its weight on small values of *p*; it is only as good as that prior (Figure 5.5, right).
+We require *P*(*p* < *p*₀ | data) ≥ *C*. *Worked example:* for 1% at 95%, the smallest such *n* is **191** (posterior probability 0.9501). The saving relative to 299 runs comes from the prior, which already places much of its weight on small values of *p*; it is only as good as that prior (Figure 5.7, right).
 
-![Figure 5.5. Sizing a test plan. Left: probability that a scenario type passes all n runs, for three true failure probabilities; a 1% scenario type passes 299 runs less than 5% of the time. Right: the Bayesian posterior for the failure probability after 191 failure-free runs; 95% of it lies below 1%.](../results/figE5_test_coverage.png){width=100%}
+![Figure 5.7. Sizing a test plan. Left: probability that a scenario type passes all n runs, for three true failure probabilities; a 1% scenario type passes 299 runs less than 5% of the time. Right: the Bayesian posterior for the failure probability after 191 failure-free runs; 95% of it lies below 1%.](../results/figE5_test_coverage.png){width=100%}
 
 *Assumptions.* Runs are independent and identically distributed draws from the scenario type, the simulator's pass/fail verdict is correct, and the failure probability does not change between runs. Correlated runs (for example small variations of one logged event) carry less information, so the real number needed is larger (Section 9).
+
+### 5.7.5 Step by step, and questions a reader might ask
+
+**The story in four steps.** (1) Pick a target: this scenario type must fail less than 1% of the time. (2) Imagine a scenario type that fails *exactly* 1% of the time, the worst one we want to reject. (3) Ask how many runs it would need to pass by luck less than 5% of the time. (4) That number of runs, all passing, demonstrates the target with 95% confidence.
+
+**Why 299 runs and not 100?** A scenario type that is *just* bad enough (1% failures) passes all of *n* runs by luck with probability 0.99^*n*^:
+
+: Table 5.8. Probability that a scenario type with a 1% failure probability passes all *n* runs by luck.
+
+| Runs *n* | 50 | 100 | 200 | 299 | 459 |
+|---|---|---|---|---|---|
+| P(all pass) | 61% | 37% | 13% | 5.0% | 1.0% |
+
+With 100 runs, a bad scenario type would slip through 37% of the time; 299 runs bring that down to 5% (95% confidence), and 459 runs to 1% (99% confidence, Table 7).
+
+**What does "95% confidence" mean here?** That the procedure would let a 1%-failing scenario type through no more than 5% of the time. It is a property of the test plan, guaranteed before any run is made.
+
+**Why would a plan that allows one failure be better if it needs more runs?** Because the zero-failure plan is harsh on good releases: a scenario type that is ten times better than the target (0.1% failures) still fails the 299-run plan 26% of the time, just by bad luck. Allowing one failure in 473 runs keeps the same protection against bad scenario types while rarely holding back good ones.
+
+**Why are these numbers only practical in simulation?** 299 independent runs per scenario type per release, for hundreds of scenario types, is far beyond what track testing or public-road driving can deliver. That is why the credibility of the simulator becomes part of the safety evidence (Section 7.4).
 
 ## 5.8 The Poisson CUSUM (Section 4.6)
 
@@ -627,14 +805,28 @@ A lower *h* detects sooner but false-alarms more often. *h* is chosen so that th
 2. *k* = (26.06 − 20.85) / ln(1.25) = 5.21 / 0.2231 = **23.36**.
 3. Average drift of *S*: in control, 20.85 − 23.36 = −2.5 per week (the bucket drains); after a +25% shift, +2.7; after +50% (*m* = 31.3), +7.9 per week.
 4. Threshold from the calibration: *h* = 16.93.
-5. In the simulated history (Figure 5.6), weeks 55 to 60 had 23, 20, 17, 19, 22 and 23 crashes. All are below 23.36, so *S* stayed at 0. The +50% regression started in week 60. Week 61 had 46 crashes: *S* = max(0, 0 + 46 − 23.36) = 22.64 ≥ 16.93, so the chart alarmed and restarted at zero.
+5. In the simulated history (Figure 5.8), weeks 55 to 60 had 23, 20, 17, 19, 22 and 23 crashes. All are below 23.36, so *S* stayed at 0. The +50% regression started in week 60. Week 61 had 46 crashes: *S* = max(0, 0 + 46 − 23.36) = 22.64 ≥ 16.93, so the chart alarmed and restarted at zero.
 6. A rough estimate of the delay after a +50% shift is *h*/drift = 16.93 / 7.9 ≈ 2.1 weeks; the exact average from Section 5.9 is 2.8 weeks, slightly longer because *S* also has to climb back from noise.
 
-![Figure 5.6. How the CUSUM works on the simulated history of all reported crashes. Top: weekly counts and the reference value k. Bottom: the CUSUM statistic, the threshold h, and the alarms (triangles); after each alarm the statistic restarts at zero.](../results/figE6_cusum_mechanics.png){width=100%}
+![Figure 5.8. How the CUSUM works on the simulated history of all reported crashes. Top: weekly counts and the reference value k. Bottom: the CUSUM statistic, the threshold h, and the alarms (triangles); after each alarm the statistic restarts at zero.](../results/figE6_cusum_mechanics.png){width=100%}
 
 *Rare outcomes.* For serious injuries, *k* = 0.075 and *h* = 3.34. Each event adds about 0.93 (1 − 0.075) and each quiet week subtracts 0.075. Ignoring the floor at zero, the chart alarms when *n* events arrive within *t* weeks such that *n* − 0.075*t* ≥ 3.34: four events within 8.8 weeks, five within 22 weeks, or six within 35 weeks. With 0.067 events expected per week, four events in nine weeks almost never happen by chance, which is why the false-alarm interval is five years, and why detection after a real +50% shift still takes a median of 70 weeks.
 
 *Assumptions.* Weekly counts are independent Poisson with a known in-control mean; the shift is a step; the chart restarts after each alarm, as it would after an investigation.
+
+### 5.8.5 Step by step, and questions a reader might ask
+
+**The story in five steps.** (1) Each week, count the events. (2) Compare the count with the allowance *k*: a count above *k* is evidence of a shift, a count below *k* evidence against. (3) Add that week's evidence (*X* − *k*) to a running score *S*, but never let *S* go below zero. (4) If *S* reaches the threshold *h*, alarm. (5) After an alarm, investigate and restart *S* at zero.
+
+**Why not just alarm when one week's count is high?** That is the Shewhart chart of Section 5.10. It ignores small, persistent increases that never make a single week stand out. The CUSUM adds up modest evidence over several weeks, which is why it detects moderate regressions 2 to 5 times faster (Table 10).
+
+**Why reset to zero instead of letting *S* go negative?** If *S* could go negative, a long run of good weeks would build up "credit" that would have to be paid off before a later regression could trigger an alarm, delaying detection. Resetting at zero means the chart always starts from a neutral position, ready to detect a shift that may begin at any time.
+
+**What does *h* mean physically?** It is an amount of excess events. For all reported crashes, *h* = 16.93 means that the chart alarms when about 17 more crashes have occurred than the allowance permits, accumulated over recent weeks; for serious injuries, about 3.3 more than allowed.
+
+**Why tune *k* to a +25% shift?** The CUSUM is fastest for the shift it is tuned for and still works, a little less efficiently, for other shifts. +25% is a regression worth catching that field data can still detect for frequent metrics. A team could tune separate charts to different shift sizes.
+
+**Why is a five-year false-alarm interval (ARL₀ = 260 weeks) chosen?** It is a design choice: lower thresholds alarm sooner but more often falsely. Section 5.11 shows that even five years per chart gives frequent false alarms when many charts run at once.
 
 ## 5.9 Verifying run lengths with a Markov chain (Section 4.7)
 
@@ -656,7 +848,7 @@ where **I** is the identity matrix and **1** a column of ones. The ARL from a fr
 
 ### 5.9.3 Worked toy example
 
-To make the method visible, take a tiny chart: weekly counts *X* ~ Poisson(0.5), *k* = 1 and *h* = 3, so *S* can only be 0, 1 or 2 before an alarm (Figure 5.7). The Poisson probabilities are *P*(0) = 0.6065, *P*(1) = 0.3033, *P*(2) = 0.0758, *P*(3) = 0.0126, *P*(4 or more) = 0.0018.
+To make the method visible, take a tiny chart: weekly counts *X* ~ Poisson(0.5), *k* = 1 and *h* = 3, so *S* can only be 0, 1 or 2 before an alarm (Figure 5.9). The Poisson probabilities are *P*(0) = 0.6065, *P*(1) = 0.3033, *P*(2) = 0.0758, *P*(3) = 0.0126, *P*(4 or more) = 0.0018.
 
 - From *S* = 0, the new value is max(0, 0 + *X* − 1): it stays 0 if *X* = 0 or 1 (0.9098), moves to 1 if *X* = 2 (0.0758), to 2 if *X* = 3 (0.0126), and alarms if *X* ≥ 4 (0.0018).
 - From *S* = 1: to 0 if *X* = 0 (0.6065), stays 1 if *X* = 1 (0.3033), to 2 if *X* = 2 (0.0758), alarm if *X* ≥ 3 (0.0144).
@@ -668,11 +860,19 @@ $$\begin{aligned}L_0&=1+0.9098\,L_0+0.0758\,L_1+0.0126\,L_2\\ L_1&=1+0.6065\,L_0
 
 Solving them (by substitution or with a computer) gives *L*₀ = **174.2**, *L*₁ = 169.3 and *L*₂ = 148.8 weeks. A simulation of 200,000 run lengths of the same chart gives 174.0 weeks, which confirms the calculation.
 
-![Figure 5.7. A toy CUSUM drawn as a Markov chain. Circles are values of the statistic; arrows are weekly transitions with their probabilities; red arrows lead to an alarm.](../results/figE7_markov_toy.png){width=82%}
+![Figure 5.9. A toy CUSUM drawn as a Markov chain. Circles are values of the statistic; arrows are weekly transitions with their probabilities; red arrows lead to an alarm.](../results/figE7_markov_toy.png){width=82%}
 
 ### 5.9.4 The real charts
 
 For the real charts, *k* and *h* are not whole numbers, so the statistic is placed on a fine grid (steps of 1/*g*, with *g* between 100 and 1,200), giving up to 5,000 states. The same Eq. (5.21) is solved numerically. Table 19 shows that the Markov chain and the simulation agree within 2.2% for all 25 comparisons, which is within the simulation's own random error. Two independent methods giving the same answer is strong evidence that both are implemented correctly.
+
+**Questions a reader might ask.**
+
+**Why verify the simulation at all?** The thresholds *h* are found by simulation (Section 5.8.3), and a simulation can be wrong because of a coding error or too few runs. The Markov chain calculates the same quantity in a completely different way. If the two agree, both are very likely right; if they disagree, at least one has a problem.
+
+**Why not use the Markov chain for everything?** It needs *k* and *h* to be rounded onto a grid, it handles only the simple chart, and it becomes large for frequent metrics. Simulation handles any variant (overdispersion, resets, leading-indicator coupling) easily. The two methods complement each other.
+
+**What is the "absorbing" state?** The alarm. Once the chain enters it, the run is over: the run length is the number of weeks it took to get there.
 
 ## 5.10 The Shewhart chart (Section 4.8)
 
@@ -684,6 +884,8 @@ $$\text{ARL}=\frac{1}{q}=\frac{1}{P(X\ge c\mid m)} \qquad (5.22)$$
 
 *Worked example (serious injury).* With *m*₀ = 0.067, *P*(*X* ≥ 1) = 0.065 is far above 1/260 = 0.0038, so the limit must be *c* = 2: *P*(*X* ≥ 2) = 1 − e^−0.067^(1 + 0.067) = 0.00215, giving ARL₀ = 466 weeks. After a +50% shift (*m* = 0.1005), *P*(*X* ≥ 2) = 0.0047 and the ARL is 212 weeks, against 91 weeks for the CUSUM (Table 10). *Any-injury crashes*: *P*(*X* ≥ 6 | 1.79) = 0.0101 is too high, *P*(*X* ≥ 7) = 0.0025 meets the target, so *c* = 7 and ARL₀ = 402 weeks. Because counts jump in whole numbers, the Shewhart chart cannot be tuned exactly to 260 weeks; the CUSUM can, because *h* is continuous.
 
+**Questions a reader might ask.** *Is the Shewhart chart ever better?* For very large shifts, where a single week is already unusual (a doubling of all crashes), both charts alarm within about a week. *Why keep it at all?* It is simple to explain and to audit, and it catches sudden, large jumps immediately; many programs run both.
+
 ## 5.11 False alarms across many charts (Section 4.9)
 
 *Derivation.* If a chart alarms falsely with a small probability of about 1/ARL₀ in each week, the probability that it stays quiet for *T* weeks is (1 − 1/ARL₀)^*T*^. Using ln(1 − *x*) ≈ −*x* for small *x*, this is approximately exp(−*T*/ARL₀). For *m* independent charts, all must stay quiet, so their probabilities multiply: exp(−*mT*/ARL₀). The probability of at least one false alarm is the complement:
@@ -691,6 +893,22 @@ $$\text{ARL}=\frac{1}{q}=\frac{1}{P(X\ge c\mid m)} \qquad (5.22)$$
 $$P(\text{at least one false alarm in } T \text{ weeks})\approx 1-\exp\left(-\frac{mT}{\text{ARL}_0}\right) \qquad (5.23)$$
 
 *Worked example.* One chart, two years (*T* = 104), ARL₀ = 260: 1 − exp(−0.4) = **0.33**. Five charts: 1 − exp(−2) = **0.86**. Twenty charts with ARL₀ = 520 weeks: 1 − exp(−4) = **0.98**. The direct simulation reported in Section 6.8 gives 85% for five charts, confirming the approximation. *The lesson:* in a real program with dozens of charts, a false alarm somewhere is practically certain every few months, so a cheap triage step is part of the design, not an afterthought.
+
+**Step by step.** (1) One chart false-alarms on average once every ARL₀ weeks. (2) Over *T* weeks, the chance that it stays quiet is about exp(−*T*/ARL₀). (3) For *m* independent charts, all must stay quiet: multiply the chances. (4) One minus that is the chance of at least one false alarm somewhere.
+
+: Table 5.9. Probability of at least one false alarm, for charts with ARL₀ = 260 weeks (one false alarm per chart per five years).
+
+| Number of charts | 1 year | 2 years |
+|---|---|---|
+| 1 | 18% | 33% |
+| 5 | 63% | 86% |
+| 10 | 86% | 98% |
+| 20 | 98% | >99% |
+| 50 | >99% | >99% |
+
+**Does this mean the charts are badly designed?** No. Each chart does what it was designed to do. The point is that a monitoring *program* with many charts will generate false alarms routinely, so the response to an alarm must start with a quick, cheap check before any expensive action, such as halting a release.
+
+**Could the thresholds simply be raised?** Yes, at the cost of slower detection: doubling ARL₀ halves the false-alarm rate but delays real detections. Budgeting false alarms across all charts, and deciding which metrics deserve the most sensitive charts, is a design decision for the program as a whole.
 
 ## 5.12 Overdispersion (Section 4.10)
 
@@ -702,7 +920,7 @@ $$\operatorname{Var}(X)=\mathbb E[\operatorname{Var}(X\mid\Lambda)]+\operatornam
 
 When Λ follows a gamma distribution, *X* follows the **negative binomial** distribution, the standard model for overdispersed counts.
 
-*Why frequent metrics suffer most.* The Poisson part grows like *m*₀ and the extra part like *m*₀². Their ratio, 1 + *v*²*m*₀, is close to 1 for rare metrics and large for frequent ones (Figure 5.8):
+*Why frequent metrics suffer most.* The Poisson part grows like *m*₀ and the extra part like *m*₀². Their ratio, 1 + *v*²*m*₀, is close to 1 for rare metrics and large for frequent ones (Figure 5.10):
 
 - Leading indicator, *m*₀ = 292, *v* = 10%: variance 292 + 0.01 × 292² = 1,148, four times the Poisson value; standard deviation 34 instead of 17.
 - All reported crashes, *m*₀ = 20.8: variance 25.2 instead of 20.8, 21% more.
@@ -710,13 +928,21 @@ When Λ follows a gamma distribution, *X* follows the **negative binomial** dist
 
 A chart whose threshold was set for SD 17 sees routine swings of 34 and false-alarms constantly: every 11 weeks instead of every 260 (Table 12). Recalibrating *h* on the wider distribution (by the same bisection, but simulating negative binomial counts) restores the false-alarm interval.
 
-![Figure 5.8. Weekly counts with and without 10% week-to-week variation in the rate. The frequent leading indicator (left) becomes twice as wide; all reported crashes (right) are barely affected.](../results/figE8_overdispersion.png){width=100%}
+![Figure 5.10. Weekly counts with and without 10% week-to-week variation in the rate. The frequent leading indicator (left) becomes twice as wide; all reported crashes (right) are barely affected.](../results/figE8_overdispersion.png){width=100%}
+
+**Questions a reader might ask.**
+
+**How would a team know how much week-to-week variation there is?** From history. If weekly counts over a stable period have mean *x̄* and variance *s*², Eq. (5.24) gives the estimate *v*² ≈ (*s*² − *x̄*) / *x̄*². If the variance equals the mean, the counts are Poisson; any excess is overdispersion.
+
+**Why not just remove the causes, for example by adjusting for weather?** That is the better long-term fix: charts stratified by city and conditions, or risk-adjusted charts that use the expected count for each week's mix of driving (Steiner et al., 2000). Recalibrating *h* is the simple fix when such adjustment is not yet available.
+
+**Why are rare metrics almost unaffected?** Because their Poisson noise is already huge relative to their mean. With 0.067 serious injuries a week, a 10% swing in the rate changes the expected count by 0.007, invisible next to the Poisson wobble of ±0.26.
 
 ## 5.13 Leading indicators must move with the outcome (Section 4.11)
 
 *The idea.* A leading indicator, such as hard-braking events, is useful only if a release that increases serious injuries also increases the indicator. β measures that coupling: if serious injuries rise by 50%, the indicator rises by 50β%.
 
-*The science, through the drift of the chart.* The leading-indicator chart has *m*₀ = 292.4 and *k* = 327.6 (tuned for +25%). The average weekly change of its statistic is *m* − *k* (Section 5.8.2). With no rise it is 292.4 − 327.6 = −35.2 events per week: the statistic stays pinned at zero. The drift becomes positive only when the indicator's mean exceeds *k*, that is, when it rises by more than *k*/*m*₀ − 1 = 12.0% (Figure 5.9):
+*The science, through the drift of the chart.* The leading-indicator chart has *m*₀ = 292.4 and *k* = 327.6 (tuned for +25%). The average weekly change of its statistic is *m* − *k* (Section 5.8.2). With no rise it is 292.4 − 327.6 = −35.2 events per week: the statistic stays pinned at zero. The drift becomes positive only when the indicator's mean exceeds *k*, that is, when it rises by more than *k*/*m*₀ − 1 = 12.0% (Figure 5.11):
 
 - a 2.5% rise (β = 0.05): drift −27.9 per week; the chart alarms only when random noise (SD 17 per week) happens to push it up, so the median time is 56 weeks;
 - a 12.5% rise (β = 0.25): drift +1.4 per week; median 2 weeks;
@@ -724,7 +950,11 @@ A chart whose threshold was set for SD 17 sees routine swings of 34 and false-al
 
 So the value of a leading indicator depends on β, which must be established from data (for example from the events that precede injury crashes), not assumed.
 
-![Figure 5.9. Expected weekly change of the leading-indicator CUSUM against how much the indicator rises when serious injuries rise 50%. Below about 12% the statistic drifts down and alarms only by chance.](../results/figE9_coupling_drift.png){width=92%}
+![Figure 5.11. Expected weekly change of the leading-indicator CUSUM against how much the indicator rises when serious injuries rise 50%. Below about 12% the statistic drifts down and alarms only by chance.](../results/figE9_coupling_drift.png){width=92%}
+
+**Step by step.** (1) The leading-indicator chart has an allowance *k* that sits 12% above its normal weekly mean. (2) If the indicator rises by less than 12%, the weekly evidence (*X* − *k*) is negative on average and the score stays near zero. (3) It can then alarm only through a lucky run of high weeks. (4) If the indicator rises by more than 12%, the score climbs steadily and alarms within weeks.
+
+**Questions a reader might ask.** *Could the chart be tuned to a smaller rise?* Yes: tuning *k* to, say, +5% makes the chart sensitive to smaller rises, but frequent metrics are sensitive to overdispersion (Section 5.12), so a smaller design shift also brings more false alarms from ordinary variation. *How could β be measured?* From data: for example, by checking how often the indicator's events (hard braking, close following) precede injury crashes, or by comparing indicator and crash rates across past releases and conditions.
 
 ## 5.14 The Bayesian sequential check (Section 4.12)
 
@@ -736,6 +966,8 @@ where *F*~Γ~ is the gamma cumulative distribution function, the probability tha
 
 *Worked example (serious injury in the simulated history).* From week 60 to week 104 (45 weeks), the fleet drove *M* = 45 × 2.92 = 131.6 million miles and recorded *N* = 7 serious-injury crashes, against 0.023 × 131.6 = 3.0 expected at the baseline rate. The posterior is Gamma(7.5, 131.6), with median 0.054 per million miles, and the probability that the rate exceeds 0.023 is **0.979**. Unlike the CUSUM, this calculation needs a candidate start date; its value is to state the strength of the evidence in a form a decision maker can use directly.
 
+**Questions a reader might ask.** *How is this different from the CUSUM?* The CUSUM answers "should we look?" continuously and with a controlled false-alarm rate. The Bayesian check answers "how sure are we, now, that the rate is higher?" for a specific start date, for example the release date or the week of an alarm. *Why 0.979 and not 1?* Seven events against three expected is strong but not overwhelming evidence; the posterior still gives about a 2% chance that the true rate did not increase.
+
 ## 5.15 The risk register (Section 4.13)
 
 Each data-based hazard *h* has *n* crashes, *k* of them with an injury, in 271.3 million miles. Three quantities are estimated:
@@ -746,13 +978,23 @@ Each data-based hazard *h* has *n* crashes, *k* of them with an injury, in 271.3
 
 *Worked example (H3, crashes with cyclists, pedestrians or scooter riders).* *n* = 31 crashes, *k* = 15 with an injury. Crash rate 31 / 271.3 = 0.114 per million miles. Severity: Beta(15.5, 16.5), median 48.4%. Injury-crash rate: Gamma(15.5, 271.3), median 5.59 per 100 million miles, 90% interval 3.55–8.29. H3 is ranked third by rate, but its severity is six times that of H1 (8.1%), which is why its treatment is "reduce".
 
-*Ranking probabilities.* To ask "how sure are we that H1 is the largest risk?", 20,000 values are drawn at random from each hazard's posterior, the hazards are ranked in each draw, and the share of draws in which each hazard is first is counted. This **Monte Carlo** method turns the uncertainty in each score into an uncertainty in the ranking. H1 (median 35.4) exceeds H2 (median 25.9) in about 98% of draws (Figure 5.10, Table 16).
+*Ranking probabilities.* To ask "how sure are we that H1 is the largest risk?", 20,000 values are drawn at random from each hazard's posterior, the hazards are ranked in each draw, and the share of draws in which each hazard is first is counted. This **Monte Carlo** method turns the uncertainty in each score into an uncertainty in the ranking. H1 (median 35.4) exceeds H2 (median 25.9) in about 98% of draws (Figure 5.12, Table 16).
 
-![Figure 5.10. Uncertainty in the risk register. Left: 20,000 posterior draws of the injury-crash rates of H1 and H2; they overlap only slightly. Right: posterior severity of three hazards; with fewer crashes, the distribution is wider.](../results/figE10_register.png){width=100%}
+![Figure 5.12. Uncertainty in the risk register. Left: 20,000 posterior draws of the injury-crash rates of H1 and H2; they overlap only slightly. Right: posterior severity of three hazards; with fewer crashes, the distribution is wider.](../results/figE10_register.png){width=100%}
+
+**Step by step.** (1) For each hazard, count crashes and injury crashes. (2) Turn the counts into posterior distributions, not single numbers. (3) Draw 20,000 random values from each posterior. (4) Rank the hazards in each draw. (5) Count how often each hazard comes first.
+
+**Questions a reader might ask.**
+
+**Why rank by injury-crash rate and not by crash rate?** Because the register is about harm. H5 (heavy trucks and buses) has seven times as many crashes as H3, but almost none cause an injury (1.9%), while about half of H3's crashes do.
+
+**Why 20,000 draws?** The ranking probability is itself estimated by counting, so it has a small random error: about √(0.978 × 0.022 / 20,000) = 0.001 for P(H1 first). 20,000 draws make that error negligible.
+
+**What do H6 to H8 contribute without data?** They keep known hazards visible. A register that lists only what can be measured would hide the operational hazards that have no public data; marking them as data gaps assigns an owner to collecting that data.
 
 ## 5.16 Summary of the methods, their assumptions and sources
 
-: Table 5.3. Every method, the question it answers, its key equation, its main assumptions and its source.
+: Table 5.10. Every method, the question it answers, its key equation, its main assumptions and its source.
 
 | Method | Question | Key equation | Main assumptions | Source |
 |---|---|---|---|---|
@@ -782,11 +1024,11 @@ Each data-based hazard *h* has *n* crashes, *k* of them with an injury, in 271.3
 
 | Metric | +10% | +25% | +50% | +100% |
 |---|---|---|---|---|
-| Leading indicator (assumed) | 2.3 (6.6) | 0.4 (1.2) | 0.1 (0.3) | <0.1 (0.1) |
-| All reported crashes | 31.9 (93) | 5.5 (16) | 1.6 (4.6) | 0.5 (1.4) |
-| Any-injury crashes | 371 (1,085) | 64.5 (189) | 18.5 (54) | 5.7 (17) |
-| Airbag deployment | 846 (2,475) | 150 (440) | 42.6 (125) | 13.1 (38) |
-| Serious injury or worse | 9,859 (28,831) | 1,728 (5,054) | 492 (1,437) | 152 (444) |
+| Leading indicator (assumed) | 2.3 (6.7) | 0.4 (1.2) | 0.1 (0.3) | <0.1 (0.1) |
+| All reported crashes | 31.9 (93) | 5.6 (16) | 1.6 (4.6) | 0.5 (1.4) |
+| Any-injury crashes | 372 (1,086) | 65.1 (190) | 18.4 (54) | 5.7 (17) |
+| Airbag deployment | 855 (2,499) | 150 (438) | 42.4 (124) | 13.1 (38) |
+| Serious injury or worse | 9,885 (28,905) | 1,733 (5,068) | 490 (1,434) | 151 (442) |
 
 **A rule of thumb.** Multiplying each exposure by its rate gives the expected number of baseline events needed, which is the same for every metric:
 
@@ -794,11 +1036,19 @@ Each data-based hazard *h* has *n* crashes, *k* of them with an injury, in 271.3
 
 | Regression | +10% | +25% | +50% | +100% |
 |---|---|---|---|---|
-| Expected baseline events | 664 | 116 | 33 | 10 |
+| Expected baseline events | 665 | 117 | 33 | 10 |
 
-So the question "how long until we would know?" reduces to "how long until we expect about 116 events?". For serious injuries, at 0.067 per week, that is 33 years.
+So the question "how long until we would know?" reduces to "how long until we expect about 117 events?". For serious injuries, at 0.067 per week, that is 33 years.
 
 ![Figure 3. Power of the exact test. Left: power grows with exposure. Right: for any-injury crashes, power and the actual false-alarm rate move in a saw-tooth because counts are discrete; the actual false-alarm rate always stays below 5%.](../results/fig6_power_curves.png){width=100%}
+
+**How to read Table 2.** Each cell answers one question: "if the release made this metric worse by this much, how many weeks of whole-fleet driving would it take before the test catches it four times out of five?" Read across a row to see how bigger regressions are caught sooner; read down a column to see how rarer outcomes take longer.
+
+**Questions a reader might ask.**
+
+*Why does a +10% regression take so much longer than +25%?* The events needed grow roughly as 1/*r*² (Section 5.3.7): a regression 2.5 times smaller needs about 6 times the evidence (665 versus 117 events).
+
+*Is 33 years for serious injuries a realistic answer?* It is the honest answer for *statistical detection from field counts alone*. It does not mean the fleet would go 33 years without noticing; individual serious crashes are investigated one by one, and testing and leading indicators provide earlier warning. It means field statistics cannot be the protection for that outcome.
 
 ## 6.2 Staged rollout and release-versus-release comparison
 
@@ -806,17 +1056,17 @@ So the question "how long until we would know?" reduces to "how long until we ex
 
 | Metric | 5% | 10% | 25% | 50% | 100% |
 |---|---|---|---|---|---|
-| Leading indicator (assumed) | 7.9 | 4.0 | 1.6 | 0.8 | 0.4 |
-| All reported crashes | 111 | 55 | 22 | 11 | 5.5 |
-| Any-injury crashes | 1,289 | 645 | 258 | 129 | 64.5 |
-| Airbag deployment | 3,009 | 1,505 | 602 | 301 | 150 |
-| Serious injury or worse | 34,569 | 17,285 | 6,914 | 3,457 | 1,728 |
+| Leading indicator (assumed) | 8.0 | 4.0 | 1.6 | 0.8 | 0.4 |
+| All reported crashes | 112 | 56 | 22 | 11 | 5.6 |
+| Any-injury crashes | 1,303 | 651 | 260 | 130 | 65 |
+| Airbag deployment | 2,997 | 1,498 | 599 | 300 | 150 |
+| Serious injury or worse | 34,662 | 17,331 | 6,932 | 3,466 | 1,733 |
 
 ![Figure 4. Staged rollout: weeks to detect a +25% regression against the share of the fleet running the release.](../results/fig5_staged_rollout.png){width=92%}
 
 A 10% canary release protects against regressions in a frequent leading indicator within a month, but needs about a year for all reported crashes. A staged rollout is therefore valuable mainly for limiting exposure while a regression is found by other means, not as a statistical test of crash outcomes.
 
-Comparing two releases with no known baseline roughly doubles the exposure (Table 5). For example, a +25% regression in any-injury crashes needs 365 million miles per release (125 weeks) instead of 189 million.
+Comparing two releases with no known baseline roughly doubles the exposure (Table 5). For example, a +25% regression in any-injury crashes needs 365 million miles per release (125 weeks) instead of 190.5 million.
 
 : Table 5. Million miles per release to detect a regression when comparing two releases (normal approximation on the log rate ratio), with weeks in brackets.
 
@@ -827,17 +1077,21 @@ Comparing two releases with no known baseline roughly doubles the exposure (Tabl
 | Airbag deployment | 4,885 (1,670) | 840 (287) | 236 (81) | 73 (25) |
 | Serious injury or worse | 56,492 (19,318) | 9,717 (3,323) | 2,725 (932) | 839 (287) |
 
+**Questions a reader might ask.** *Why is release-versus-release comparison almost twice as slow?* Both releases' rates are uncertain, so the noise doubles (Section 5.4). *Should a team therefore avoid staged rollouts?* No. A staged rollout limits exposure while a problem is found by other means; it simply should not be relied on as a quick statistical test of crash outcomes (Section 5.5).
+
 ## 6.3 Uncertainty in the baseline rate
 
 : Table 6. Weeks to detect +25% at the 5th, 50th and 95th posterior percentiles of the baseline rate.
 
 | Metric | Events | 5th percentile rate | Median | 95th percentile rate |
 |---|---|---|---|---|
-| Any-injury crashes | 166 | 73 weeks | 65 weeks | 56 weeks |
-| Airbag deployment | 72 | 183 | 150 | 123 |
-| Serious injury or worse | 6 | 3,629 (70 years) | 1,761 (34 years) | 950 (18 years) |
+| Any-injury crashes | 166 | 74 weeks | 65 weeks | 57 weeks |
+| Airbag deployment | 72 | 183 | 150 | 124 |
+| Serious injury or worse | 6 | 3,671 (71 years) | 1,753 (34 years) | 967 (19 years) |
 
-Even at the most favorable end of its uncertainty, the serious-injury rate needs 18 years of whole-fleet driving to reveal a +25% regression. The conclusion does not depend on the exact baseline.
+Even at the most favorable end of its uncertainty, the serious-injury rate needs 19 years of whole-fleet driving to reveal a +25% regression. The conclusion does not depend on the exact baseline.
+
+**Questions a reader might ask.** *Why do the columns run from slowest to fastest?* The left column uses a low plausible value of the baseline rate: fewer events per week, so more weeks to collect the ~117 needed. *Does the uncertainty change the conclusion?* No: even the most favorable value leaves 19 years for serious injuries.
 
 ## 6.4 How much testing replaces the missing field evidence
 
@@ -863,6 +1117,10 @@ The zero-failure plan is the cheapest, but it is harsh on good releases: a scena
 
 These numbers are practical only in simulation. The credibility of the simulation, which the companion project av-counterfactual-uq quantifies for one model class, therefore becomes part of the release evidence.
 
+**How to read Tables 7 and 8.** Each number is the count of independent scenario runs a release must pass to demonstrate a target failure probability with a stated confidence (Section 5.7).
+
+**Questions a reader might ask.** *Why does a tenfold stricter target need ten times as many runs?* Because *n* ≈ 3/*p*₀: halving the allowed failure probability doubles the runs. *Is the Bayesian plan "cheating"?* No, but it relies on the prior: it is a fair saving only if the prior's assumption that small failure probabilities are likely is justified for that scenario type.
+
 ## 6.5 Sequential monitoring: design and performance
 
 : Table 9. Poisson CUSUM design per metric (weekly counts; tuned for +25%; target ARL₀ 260 weeks). Median weeks to the first alarm after a regression starts (simulation).
@@ -877,7 +1135,11 @@ These numbers are practical only in simulation. The credibility of the simulatio
 
 ![Figure 6. Average weeks to alarm against regression size: Markov chain (lines) and simulation (crosses).](../results/fig8_arl_curves.png){width=92%}
 
-The CUSUM detects a +25% regression in all reported crashes in about 6 weeks, matching the fixed-sample analysis (5.5 weeks), but it does so continuously, without having to choose a test window. For serious injuries, a +50% regression takes a median of 70 weeks; for any single release that is too slow, but the chart still protects against a persistent drift across several releases.
+The CUSUM detects a +25% regression in all reported crashes in about 6 weeks, matching the fixed-sample analysis (5.6 weeks), but it does so continuously, without having to choose a test window. For serious injuries, a +50% regression takes a median of 70 weeks; for any single release that is too slow, but the chart still protects against a persistent drift across several releases.
+
+**How to read Table 9.** For each metric: the expected weekly count, the chart's allowance *k* and threshold *h*, the false-alarm interval achieved (about 260 weeks), and the median number of weeks until the first alarm after a regression of each size starts.
+
+**Questions a reader might ask.** *Why do the thresholds differ so much (3.3 to 16.9)?* *h* is measured in events, and it must be large enough to absorb each metric's normal random fluctuation for five years on average; that fluctuation depends on how many events occur per week. *Why does the CUSUM match the fixed-sample test for all crashes (about 6 weeks)?* Both need about the same amount of evidence; the CUSUM's advantage is that it watches continuously and does not need a test window chosen in advance.
 
 ## 6.6 CUSUM versus a weekly threshold
 
@@ -892,6 +1154,8 @@ The CUSUM detects a +25% regression in all reported crashes in about 6 weeks, ma
 | Leading indicator (assumed) | ≥ 340 (282) | 1.1 / 1.1 | 1.0 / 1.0 | 1.0 / 1.0 |
 
 For moderate regressions in the rarer counts, the CUSUM is about 2 to 5 times faster because it accumulates evidence over weeks instead of waiting for one unusual week. Part of the Shewhart chart's slowness comes from discreteness: with weekly means below 2, the smallest admissible limit already gives an ARL₀ well above 260 weeks. The Shewhart chart is competitive only for very large shifts, where a single week is already unusual.
+
+**Questions a reader might ask.** *Why is the Shewhart chart's false-alarm interval not exactly 260 weeks?* Its limit must be a whole number of events, and with small weekly means the smallest admissible limit already overshoots the target (Section 5.10). *When would a team still use it?* For sudden, very large jumps, which it catches as quickly as the CUSUM, and because it is simple to explain.
 
 ## 6.7 A simulated two-year history
 
@@ -911,11 +1175,17 @@ The serious-injury chart was lucky in this run (median 70 weeks). The Bayesian c
 
 ![Figure 8. Bayesian check on the same history: posterior probability that each rate has increased, using data since week 60.](../results/fig11_bayes_check.png){width=88%}
 
+**How to read Figure 7.** Each panel is one metric. The line is the CUSUM statistic divided by its threshold, so an alarm happens when it reaches 1. Grey markers before week 60 are false alarms; red markers after week 60 are detections of the real regression.
+
+**Questions a reader might ask.** *Why did the airbag and leading-indicator charts false-alarm in week 31?* Pure chance: with five charts, at least one false alarm in two years is expected (Section 6.8). *Why did serious injuries take 22 weeks here but a median of 70 weeks in Table 9?* One simulated history is one roll of the dice; this one happened to produce several serious-injury events soon after the change.
+
 ## 6.8 False alarms add up
 
 ![Figure 9. Probability of at least one false alarm in two years, by number of charts and ARL₀ per chart.](../results/fig9_familywise.png){width=85%}
 
 With five charts at ARL₀ = 260 weeks, the probability of at least one false alarm in two years is 86% by the approximation of Section 4.9 and 85% by direct simulation. A realistic program monitors many more metrics, by city, vehicle platform and scenario type; twenty charts at ARL₀ = 520 weeks give a 98% chance of a false alarm in two years. False alarms are therefore not a failure of the method but a certainty to plan for: each alarm needs a cheap, fast triage step (for example, checking the alarmed events, the city and weather mix, and the release notes) before any expensive response.
+
+**Questions a reader might ask.** *If each chart false-alarms only once in five years, how can the program false-alarm 86% of the time in two years?* Because the chances add up across charts: each of the five charts has a 33% chance of a false alarm in two years, and the chance that *none* of them does is only 14% (Section 5.11, Table 5.9).
 
 ## 6.9 Overdispersion: the hidden risk for frequent metrics
 
@@ -936,6 +1206,8 @@ With five charts at ARL₀ = 260 weeks, the probability of at least one false al
 
 Rare metrics are almost unaffected, because Poisson noise dominates any rate variation. Frequent metrics are badly affected: a leading indicator with only 5% week-to-week variation would false-alarm about once a year instead of once every five years, and with 10% variation about every 11 weeks. The remedy is to estimate the dispersion from historical data and calibrate the threshold on it (or use a negative-binomial CUSUM). After recalibration the leading indicator still detects a +25% change in under 3 weeks.
 
+**Questions a reader might ask.** *Why is the leading indicator hit hardest when it is the most useful metric?* Its high weekly count makes Poisson noise small relative to the mean, which is what makes it fast; but that also means that any real-world variation in the rate (weather, city mix) dominates its fluctuations (Section 5.12). The remedy is to calibrate its threshold on historical data, after which it still detects a +25% change in under 3 weeks.
+
 ## 6.10 Leading indicators must move with the outcome
 
 : Table 14. Median weeks to alarm on the leading-indicator chart when serious injuries rise 50% and the indicator rises by a fraction of that.
@@ -947,6 +1219,8 @@ Rare metrics are almost unaffected, because Poisson noise dominates any rate var
 ![Figure 10. Median weeks to alarm on the leading-indicator chart against how much the indicator rises when serious injuries rise 50%. Dashed line: the serious-injury chart itself.](../results/fig10_indicator_coupling.png){width=88%}
 
 A leading indicator beats the serious-injury chart (median 70 weeks) as long as it rises by more than about 2.5% when serious injuries rise 50%. Rising by 5% gives a median of 20 weeks, and rising by 12.5% about 2 weeks. Establishing that coupling, for example from the conflict patterns that precede injury crashes, is therefore as important as building the chart.
+
+**Questions a reader might ask.** *Why is there a sharp change between a 5% and a 12.5% rise?* The chart's allowance sits about 12% above the indicator's normal mean. Below that, the chart drifts down and alarms only by chance; above it, it drifts up and alarms within weeks (Section 5.13, Figure 5.11).
 
 ## 6.11 Risk register
 
@@ -977,11 +1251,17 @@ A leading indicator beats the serious-injury chart (median 70 weeks) as long as 
 
 The ranking is robust: H1 exceeds H2 with probability 97.8% and H3 exceeds H4 with probability 99.0%. H3 (vulnerable road users) is ranked third by rate but carries the highest severity, with nearly half of its crashes causing an injury; its treatment is therefore "reduce" rather than "monitor". The register also lists, for each hazard, its treatment, monitoring metric and owner team (`data/risk_register.csv`), so it can be reviewed with the teams that own the design.
 
+**How to read Table 15.** For each hazard: how many crashes it caused, how often they occurred, how likely each was to injure someone, and the resulting rate of injury crashes with a 90% interval. Table 16 then says how certain the ranking is.
+
+**Questions a reader might ask.** *Why is H3 (vulnerable road users) "reduce" when it ranks only third?* Because its severity is much higher: about half of its crashes injure someone, against 8% for H1. Treatment decisions use both frequency and severity, not only the ranking. *What do the 90% intervals mean?* Given the data and the prior, the true injury-crash rate lies in that range with 90% probability (Section 5.6).
+
 ## 6.12 Automated release health report
 
 ![Figure 12. The one-page release health report generated by `scripts/run_all.py` for the simulated history.](../results/fig4_release_health_report.png){width=62%}
 
 The report is written by the same script that runs the analysis, so every number in it is computed. Its structure follows what a decision maker needs, in order: the bottom line and recommended action; the status of each monitored metric with the evidence behind it; what field data can and cannot catch; the top risks with uncertainty; the data gaps with owners; and the next actions. For a real program, the same structure would be fed from the fleet's event database at each release.
+
+**Questions a reader might ask.** *Why generate the report from code?* Releases are frequent; a report written by hand each time risks inconsistency and errors. Generating it from the same code that runs the analysis means every number is computed, and the structure stays the same from release to release.
 
 # 7. Discussion: what this means for release gating
 
@@ -1017,7 +1297,7 @@ In nuclear power, plant changes are screened and evaluated before installation, 
 
 # 8. Verification
 
-: Table 18. Verification tests (`python tests/test_core.py`; all pass).
+: Table 18. Verification tests (`python tests/test_core.py`; all 11 pass).
 
 | Test | What it checks |
 |---|---|
@@ -1031,6 +1311,7 @@ In nuclear power, plant changes are screened and evaluated before installation, 
 | Bayesian check | P(rate increased) ≈ 0.5 at the baseline for large counts |
 | Markov chain vs simulation | Brook–Evans ARL within 5% of simulated ARL |
 | Shewhart limit | The limit meets the false-alarm target and is the smallest such limit |
+| Exact detectability search | Agrees with a brute-force scan at steps of 0.0002% of the exposure; power never falls below 80% beyond the reported exposure |
 
 : Table 19. Run-length verification: simulation (4,000 runs) against the Markov chain, in weeks.
 
@@ -1045,6 +1326,8 @@ In nuclear power, plant changes are screened and evaluated before installation, 
 The largest relative difference across all 25 comparisons is 2.2%, within the Monte Carlo error of 4,000 runs (about 1.6% for an ARL of 260). Two independent methods therefore agree on every run length used in this report.
 
 One subtlety appears for the leading indicator: its threshold sits close to a jump in the discrete run-length distribution, so its ARL₀ is sensitive to the third digit of h (233 weeks in the design table, which used the unrounded threshold and 3,000 runs; 274 weeks with the rounded threshold). In practice this is another reason to calibrate thresholds on historical data.
+
+**Questions a reader might ask.** *What does verification prove, and what not?* It shows that the code computes what the equations say: the exact test never exceeds its false-alarm limit, the CUSUM thresholds give the intended false-alarm interval, and two independent methods agree on every run length. It does not show that the inputs (rates, exposure, the Poisson assumption) describe the real fleet; that is the role of the limitations in Section 9 and of validation against real data. *Why is a 2.2% difference between simulation and Markov chain acceptable?* Because 4,000 simulated run lengths themselves have a random error of about 1.6% for an ARL of 260 weeks; differences of that size are expected even if both methods are exactly right.
 
 # 9. Limitations
 
@@ -1069,7 +1352,7 @@ One subtlety appears for the leading indicator: its threshold sits close to a ju
 
 ```
 pip install -r requirements.txt
-python tests/test_core.py              # 10 tests
+python tests/test_core.py              # 11 tests
 python scripts/run_all.py              # main tables, figures, release report (about 30 s)
 python scripts/supplementary.py        # supplementary studies (about 2 minutes)
 python scripts/workflow_figure.py      # Figure 1
