@@ -103,10 +103,15 @@ def runs_needed(p0, conf, c):
 
 def bayes_runs(p0, conf):
     # Jeffreys prior Beta(1/2, 1/2); zero failures in n runs -> Beta(1/2, n + 1/2); need P(p < p0) >= conf
-    n = 0
-    while beta.cdf(p0, 0.5, n + 0.5) < conf:
-        n = n + 1 if n < 100 else int(n * 1.01) + 1
-    return n
+    # smallest n by bisection (P(p < p0) increases with n)
+    lo, hi = 0, 10_000_000
+    while lo < hi:
+        m = (lo + hi) // 2
+        if beta.cdf(p0, 0.5, m + 0.5) >= conf:
+            hi = m
+        else:
+            lo = m + 1
+    return lo
 
 
 rows = []
