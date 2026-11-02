@@ -20,7 +20,7 @@ After each software release, an ADS safety team needs to know two things: whethe
 | ... in serious-injury-or-worse crashes | about 1,730 (33 years) |
 | ... in a frequent leading indicator (assumed 100 per million miles) | under 1 |
 | Failure-free scenario runs to show P(failure) < 1% at 95% confidence | 299 |
-| Expected baseline events needed to detect +25%, for any metric | about 116 |
+| Expected baseline events needed to detect +25%, for any metric | about 117 |
 | Weeks to detect +25% in all crashes on a 10% canary release | about 55 |
 | Chance of at least one false alarm in 2 years across 5 CUSUM charts, each with one false alarm per 5 years | 85–86% |
 | Weeks between false alarms on a frequent metric whose weekly rate varies by 10% (Poisson-designed chart) | about 11 |
@@ -49,7 +49,7 @@ Requires Python 3.10 or newer.
 
 ```bash
 pip install -r requirements.txt
-python tests/test_core.py        # 10 tests
+python tests/test_core.py        # 11 tests
 python scripts/run_all.py        # main tables, figures and the release health report (about 30 s)
 python scripts/supplementary.py  # supplementary studies (about 2 minutes)
 python scripts/workflow_figure.py
