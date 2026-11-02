@@ -1,10 +1,10 @@
 {
  "fleet_miles_per_week_M": 2.924282077798107,
  "fleet_miles_per_month_M": 12.671889003791797,
- "serious_25pct_weeks": 1728.4,
- "serious_25pct_years": 33.23846153846154,
- "anyinj_25pct_weeks": 64.5,
- "allcrash_25pct_weeks": 5.5,
+ "serious_25pct_weeks": 1733.1,
+ "serious_25pct_years": 33.32884615384615,
+ "anyinj_25pct_weeks": 65.1,
+ "allcrash_25pct_weeks": 5.6,
  "lead_25pct_weeks": 0.4,
  "tests_1pct_95": 299,
  "timeline": {

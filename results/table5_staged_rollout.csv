@@ -1,25 +1,25 @@
 metric,fleet_fraction,weeks_to_detect_25pct
-All reported crashes,0.05,110.7
-All reported crashes,0.1,55.3
-All reported crashes,0.25,22.1
-All reported crashes,0.5,11.1
-All reported crashes,1.0,5.5
-Any-injury crashes,0.05,1289.2
-Any-injury crashes,0.1,644.6
-Any-injury crashes,0.25,257.8
-Any-injury crashes,0.5,128.9
-Any-injury crashes,1.0,64.5
-Airbag deployment,0.05,3009.0
-Airbag deployment,0.1,1504.5
-Airbag deployment,0.25,601.8
-Airbag deployment,0.5,300.9
-Airbag deployment,1.0,150.4
-Serious injury or worse,0.05,34569.0
-Serious injury or worse,0.1,17284.5
-Serious injury or worse,0.25,6913.8
-Serious injury or worse,0.5,3456.9
-Serious injury or worse,1.0,1728.4
-Leading indicator (assumed),0.05,7.9
+All reported crashes,0.05,111.8
+All reported crashes,0.1,55.9
+All reported crashes,0.25,22.4
+All reported crashes,0.5,11.2
+All reported crashes,1.0,5.6
+Any-injury crashes,0.05,1302.6
+Any-injury crashes,0.1,651.3
+Any-injury crashes,0.25,260.5
+Any-injury crashes,0.5,130.3
+Any-injury crashes,1.0,65.1
+Airbag deployment,0.05,2997.1
+Airbag deployment,0.1,1498.5
+Airbag deployment,0.25,599.4
+Airbag deployment,0.5,299.7
+Airbag deployment,1.0,149.9
+Serious injury or worse,0.05,34661.5
+Serious injury or worse,0.1,17330.8
+Serious injury or worse,0.25,6932.3
+Serious injury or worse,0.5,3466.2
+Serious injury or worse,1.0,1733.1
+Leading indicator (assumed),0.05,8.0
 Leading indicator (assumed),0.1,4.0
 Leading indicator (assumed),0.25,1.6
 Leading indicator (assumed),0.5,0.8

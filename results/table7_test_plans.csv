@@ -8,4 +8,4 @@ target_failure_prob,allowed_failures,runs_needed_95pct
 0.001,1,4742
 0.001,2,6294
 0.001,5,10511
-0.001,"0 (Bayesian, Jeffreys prior)",1918
+0.001,"0 (Bayesian, Jeffreys prior)",1920
