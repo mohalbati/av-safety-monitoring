@@ -68,6 +68,20 @@ def test_shewhart_limit_meets_false_alarm_target():
         assert shewhart_arl(m0, c) >= 260 and shewhart_arl(m0, c - 1) < 260
 
 
+def test_exact_detectability_matches_brute_force():
+    # the exact tooth-by-tooth search must agree with a very fine brute-force scan, and power
+    # must never fall below 80% beyond the returned exposure (the saw-tooth is handled)
+    lam, r = 0.612, 0.25
+    M = miles_to_detect_one_sample(lam, r)
+    g = np.arange(M * 0.97, M * 1.03, M * 2e-6)
+    mu0 = lam * g
+    c = poisson.isf(0.05, mu0).astype(int) + 1
+    pw = poisson.sf(c - 1, (1 + r) * mu0)
+    last_bad = g[np.where(pw < 0.8)[0][-1]]
+    assert abs(last_bad - M) / M < 1e-4
+    assert pw[g >= M].min() >= 0.8 - 1e-9
+
+
 if __name__ == "__main__":
     for name, f in list(globals().items()):
         if name.startswith("test_"):
