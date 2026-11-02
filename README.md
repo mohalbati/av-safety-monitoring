@@ -53,6 +53,7 @@ python tests/test_core.py        # 10 tests
 python scripts/run_all.py        # main tables, figures and the release health report (about 30 s)
 python scripts/supplementary.py  # supplementary studies (about 2 minutes)
 python scripts/workflow_figure.py
+python scripts/explainer_figures.py    # worked examples and figures for Section 5 of the report
 python scripts/make_monitoring_video.py results/monitoring.mp4 results/monitoring_last_frame.png   # needs FFmpeg
 python scripts/build_docs.py     # optional: rebuild the report and note (needs pandoc; see requirements-docs.txt)
 ```
