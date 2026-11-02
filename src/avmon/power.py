@@ -23,17 +23,34 @@ def power_one_sample(M, lam0, r, alpha=0.05):
     return poisson.sf(c - 1, mu1)
 
 
-def miles_to_detect_one_sample(lam0, r, power=0.8, alpha=0.05, M_max=1e5):
-    """Smallest exposure (million miles) after which power stays >= target (exact Poisson)."""
-    grid = np.geomspace(1e-3, M_max, 4000)
-    p = np.array([power_one_sample(M, lam0, r, alpha) for M in grid])
-    ok = p >= power
-    if not ok.any():
-        return np.inf
-    # first M after which the (saw-tooth) power never falls below target again
-    last_bad = np.where(~ok)[0]
-    idx = last_bad[-1] + 1 if len(last_bad) else 0
-    return float(grid[idx]) if idx < len(grid) else np.inf
+def expected_events_to_detect(r, power=0.8, alpha=0.05, confirm=500):
+    """Expected baseline events mu0 = lam0*M after which the exact test's power never falls below `power`.
+
+    Exact, without a grid. Because counts are whole numbers, the critical count c steps up by one at
+    mu0 = J_n, where P(N >= n | J_n) = alpha (J_n = gammaincinv(n, alpha)). Between two steps power rises
+    smoothly; just after each step it drops (the saw-tooth). The lowest power of the tooth with critical
+    count n is therefore at its left edge, P(N >= n | (1+r) J_{n-1}). We find the last tooth whose
+    lowest point is below the target and return the point inside it where power reaches the target.
+    P(N >= n | mu) = gammainc(n, mu) (regularized lower incomplete gamma function).
+    """
+    from scipy.special import gammainc, gammaincinv
+    last, n = None, 2
+    while True:
+        bottom = gammainc(n, (1 + r) * gammaincinv(n - 1, alpha))
+        if bottom < power:
+            last = n
+        elif last is not None and n > last + confirm:
+            break
+        n += 1
+    J_prev, J_n = gammaincinv(last - 1, alpha), gammaincinv(last, alpha)
+    x = gammaincinv(last, power) / (1 + r)        # where power reaches the target inside that tooth
+    return float(min(max(x, J_prev), J_n)) * (1 + 1e-9)   # tiny margin against floating-point round-off
+
+
+def miles_to_detect_one_sample(lam0, r, power=0.8, alpha=0.05):
+    """Smallest exposure (million miles) after which power stays >= target (exact Poisson test).
+    The answer depends on lam0 only through mu0 = lam0 * M (see expected_events_to_detect)."""
+    return expected_events_to_detect(r, power, alpha) / lam0
 
 
 def miles_to_detect_two_sample(lam0, r, power=0.8, alpha=0.05):
