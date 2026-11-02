@@ -70,7 +70,8 @@ mu0, mu1 = lam_i * M_inj, 1.25 * lam_i * M_inj
 c = _critical(mu0, 0.05)
 N["exact_test"] = {"M": M_inj, "weeks": M_inj / W, "mu0": mu0, "mu1": mu1, "c": c,
                    "alpha_actual": poisson.sf(c - 1, mu0), "power": poisson.sf(c - 1, mu1),
-                   "normal_c": mu0 + 1.645 * np.sqrt(mu0)}
+                   "normal_c": mu0 + 1.645 * np.sqrt(mu0),
+                   "line_table": {int(n): [float(poisson.sf(n - 1, mu0)), float(poisson.sf(n - 1, mu1))] for n in range(c - 5, c + 2)}}
 xs = np.arange(80, 190)
 fig, ax = plt.subplots(figsize=(9, 3.8))
 ax.bar(xs, poisson.pmf(xs, mu0), color="#9DBFEA", width=1.0, label=f"no regression: expected {mu0:.1f} events")
@@ -78,11 +79,52 @@ ax.bar(xs, poisson.pmf(xs, mu1), color="#F5B394", width=1.0, alpha=0.75, label=f
 ax.bar(xs[xs >= c], poisson.pmf(xs[xs >= c], mu0), color=BLUE, width=1.0, label=f"false alarm (α = {N['exact_test']['alpha_actual']:.3f})")
 ax.axvline(c - 0.5, color=RED, lw=1.5, ls="--")
 ax.text(c + 1, ax.get_ylim()[1] * 0.92, f"critical count c = {c}\nalarm if N ≥ {c}", color=RED, fontsize=9)
-ax.text(165, 0.022, f"power = {N['exact_test']['power']:.3f}\n(orange area right of c)", color=ORANGE, fontsize=9)
+ax.text(c + 25, 0.022, f"power = {N['exact_test']['power']:.3f}\n(orange area right of c)", color=ORANGE, fontsize=9)
 ax.set_xlabel(f"number of any-injury crashes observed in M = {M_inj:.1f} million miles ({M_inj / W:.1f} weeks)")
 ax.set_ylabel("probability"); ax.legend(frameon=False, fontsize=8.5, loc="upper left")
 ax.set_title("The exact Poisson test for a +25% regression in any-injury crashes", loc="left", fontsize=10.5)
 save(fig, "figE2_exact_test.png")
+
+# ---------------------------------------------------------------- E2b hills at three exposures
+fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.2), sharey=False)
+N["hills"] = {}
+for ax, Mx in zip(axes, (20, 100, M_inj)):
+    a0, a1 = lam_i * Mx, 1.25 * lam_i * Mx
+    cc = _critical(a0, 0.05)
+    xs_ = np.arange(max(0, int(a0 - 4.5 * np.sqrt(a0))), int(a1 + 4.5 * np.sqrt(a1)))
+    ax.bar(xs_, poisson.pmf(xs_, a0), color="#9DBFEA", width=1.0)
+    ax.bar(xs_, poisson.pmf(xs_, a1), color="#F5B394", width=1.0, alpha=0.75)
+    ax.axvline(cc - 0.5, color=RED, ls="--", lw=1.3)
+    pw_ = poisson.sf(cc - 1, a1)
+    N["hills"][f"{Mx:.1f}"] = {"weeks": Mx / W, "mu0": a0, "mu1": a1, "c": cc, "alpha": poisson.sf(cc - 1, a0), "power": pw_}
+    ax.set_title(f"{Mx:.0f} million miles ({Mx / W:.0f} weeks)\nexpected {a0:.0f} vs {a1:.0f}; line at {cc}; power {pw_:.0%}", loc="left", fontsize=9)
+    ax.set_xlabel("injury crashes counted"); ax.set_yticks([])
+axes[0].set_ylabel("probability")
+save(fig, "figE2b_hills_separate.png")
+
+# ---------------------------------------------------------------- E2c saw-tooth
+Ms = np.arange(176, 196.001, 0.02)
+mu0s = lam_i * Ms
+cs = poisson.isf(0.05, mu0s).astype(int) + 1
+al = poisson.sf(cs - 1, mu0s); pw = poisson.sf(cs - 1, 1.25 * mu0s)
+fig, ax = plt.subplots(3, 1, figsize=(9, 6.2), sharex=True, gridspec_kw={"height_ratios": [1, 1, 1.4]})
+ax[0].step(Ms, cs, where="post", color=RED, lw=1.8); ax[0].set_ylabel("alarm line c")
+ax[0].set_title("The alarm line can only move in whole steps", loc="left", fontsize=9.5)
+ax[1].plot(Ms, al * 100, color=BLUE, lw=1.5); ax[1].axhline(5, color=GREY, ls="--", lw=1); ax[1].set_ylabel("false alarm (%)")
+ax[1].set_title("False-alarm rate creeps up to 5%, then the line steps up and it drops", loc="left", fontsize=9.5)
+ax[2].plot(Ms, pw * 100, color=ORANGE, lw=1.6); ax[2].axhline(80, color=GREY, ls="--", lw=1); ax[2].set_ylabel("power (%)")
+Mreq = M_inj
+ax[2].axvline(Mreq, color=GREEN, lw=1.5); ax[2].text(Mreq + 0.2, 77.6, f"{Mreq:.1f}: from here on,\npower never falls below 80%", color=GREEN, fontsize=8.5)
+first = Ms[np.argmax(pw >= 0.8)]
+ax[2].annotate(f"first touches 80% at {first:.1f}\nbut falls back", (first, 80), xytext=(177, 81.6), fontsize=8.5, arrowprops=dict(arrowstyle="->", color=GREY))
+ax[2].set_title("Power rises with the miles, then drops at every step: the saw-tooth", loc="left", fontsize=9.5)
+ax[2].set_xlabel("million miles driven on the release (any-injury crashes, +25% regression)")
+save(fig, "figE2c_sawtooth.png")
+N["sawtooth"] = {"first_touch_80": float(first), "required": Mreq,
+                 "rows": {f"{m:.1f}": {"mu0": lam_i * m, "c": int(poisson.isf(0.05, lam_i * m)) + 1,
+                                       "alpha": float(poisson.sf(int(poisson.isf(0.05, lam_i * m)), lam_i * m)),
+                                       "power": float(poisson.sf(int(poisson.isf(0.05, lam_i * m)), 1.25 * lam_i * m))}
+                          for m in (186.0, 186.5, 187.0, 187.5, 188.0, 188.5, 189.0, 189.5, 190.0, 190.5)}}
 
 # ---------------------------------------------------------------- E3 events rule
 za, zb = norm.ppf(0.95), norm.ppf(0.80)
